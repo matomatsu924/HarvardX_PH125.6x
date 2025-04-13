@@ -323,4 +323,219 @@ select(new_wide_data, country, "1960":"1967")
 
 #### Separate
 
-aafafa
+``` r
+path <- system.file("extdata", package="dslabs")
+fname <- "life-expectancy-and-fertility-two-countries-example.csv"
+filename <- file.path(path,fname)
+
+raw_dat <- read_csv(filename)
+#View(raw_dat)
+select(raw_dat, 1:4)
+```
+
+    # A tibble: 2 × 4
+      country     `1960_fertility` `1960_life_expectancy` `1961_fertility`
+      <chr>                  <dbl>                  <dbl>            <dbl>
+    1 Germany                 2.41                   69.3             2.44
+    2 South Korea             6.16                   53.0             5.99
+
+``` r
+dat <- raw_dat %>% pivot_longer(-country)
+head(dat)
+```
+
+    # A tibble: 6 × 3
+      country name                 value
+      <chr>   <chr>                <dbl>
+    1 Germany 1960_fertility        2.41
+    2 Germany 1960_life_expectancy 69.3 
+    3 Germany 1961_fertility        2.44
+    4 Germany 1961_life_expectancy 69.8 
+    5 Germany 1962_fertility        2.47
+    6 Germany 1962_life_expectancy 70.0 
+
+La función separate() toma tres argumentos. El primero es el nombre de
+la columna que será separada. El segundo el nombre para las nuevas
+columnas y el tercero será el caracter que separa las variables
+
+``` r
+dat %>% separate(name, c("year", "name"), sep = "_")
+```
+
+    Warning: Expected 2 pieces. Additional pieces discarded in 112 rows [2, 4, 6, 8, 10, 12,
+    14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, ...].
+
+    # A tibble: 224 × 4
+       country year  name      value
+       <chr>   <chr> <chr>     <dbl>
+     1 Germany 1960  fertility  2.41
+     2 Germany 1960  life      69.3 
+     3 Germany 1961  fertility  2.44
+     4 Germany 1961  life      69.8 
+     5 Germany 1962  fertility  2.47
+     6 Germany 1962  life      70.0 
+     7 Germany 1963  fertility  2.49
+     8 Germany 1963  life      70.1 
+     9 Germany 1964  fertility  2.49
+    10 Germany 1964  life      70.7 
+    # ℹ 214 more rows
+
+Con el argumento convert = TRUE, se transforma automáticamente el año en
+valor numérico
+
+``` r
+dat %>% separate(name, c("year", "name"), convert = TRUE)
+```
+
+    Warning: Expected 2 pieces. Additional pieces discarded in 112 rows [2, 4, 6, 8, 10, 12,
+    14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, ...].
+
+    # A tibble: 224 × 4
+       country  year name      value
+       <chr>   <int> <chr>     <dbl>
+     1 Germany  1960 fertility  2.41
+     2 Germany  1960 life      69.3 
+     3 Germany  1961 fertility  2.44
+     4 Germany  1961 life      69.8 
+     5 Germany  1962 fertility  2.47
+     6 Germany  1962 life      70.0 
+     7 Germany  1963 fertility  2.49
+     8 Germany  1963 life      70.1 
+     9 Germany  1964 fertility  2.49
+    10 Germany  1964 life      70.7 
+    # ℹ 214 more rows
+
+Se puede agregar otra columna para el “expectancy. Se llenarán algunos
+valores nulos automáticamente (espacios fertility)
+
+``` r
+dat %>% separate(name, c("year", "name1", "name2"),
+                 fill = "right" ,
+                 convert = TRUE)
+```
+
+    # A tibble: 224 × 5
+       country  year name1     name2      value
+       <chr>   <int> <chr>     <chr>      <dbl>
+     1 Germany  1960 fertility <NA>        2.41
+     2 Germany  1960 life      expectancy 69.3 
+     3 Germany  1961 fertility <NA>        2.44
+     4 Germany  1961 life      expectancy 69.8 
+     5 Germany  1962 fertility <NA>        2.47
+     6 Germany  1962 life      expectancy 70.0 
+     7 Germany  1963 fertility <NA>        2.49
+     8 Germany  1963 life      expectancy 70.1 
+     9 Germany  1964 fertility <NA>        2.49
+    10 Germany  1964 life      expectancy 70.7 
+    # ℹ 214 more rows
+
+Sin embargo, es un mejor enfoque unir los nombres extra que se generen a
+partir del argumento extra= “merge”
+
+``` r
+dat %>%  separate(name, c("year", "name"), sep="_",
+                  extra = "merge", convert = TRUE)
+```
+
+    # A tibble: 224 × 4
+       country  year name            value
+       <chr>   <int> <chr>           <dbl>
+     1 Germany  1960 fertility        2.41
+     2 Germany  1960 life_expectancy 69.3 
+     3 Germany  1961 fertility        2.44
+     4 Germany  1961 life_expectancy 69.8 
+     5 Germany  1962 fertility        2.47
+     6 Germany  1962 life_expectancy 70.0 
+     7 Germany  1963 fertility        2.49
+     8 Germany  1963 life_expectancy 70.1 
+     9 Germany  1964 fertility        2.49
+    10 Germany  1964 life_expectancy 70.7 
+    # ℹ 214 more rows
+
+Finalmente, se separan los datos de fertility y life_expectancy en
+columnas
+
+``` r
+dat %>% separate(name, c("year", "name"), sep = "_",
+                 extra="merge", convert = TRUE) %>%
+  pivot_wider()
+```
+
+    # A tibble: 112 × 4
+       country  year fertility life_expectancy
+       <chr>   <int>     <dbl>           <dbl>
+     1 Germany  1960      2.41            69.3
+     2 Germany  1961      2.44            69.8
+     3 Germany  1962      2.47            70.0
+     4 Germany  1963      2.49            70.1
+     5 Germany  1964      2.49            70.7
+     6 Germany  1965      2.48            70.6
+     7 Germany  1966      2.44            70.8
+     8 Germany  1967      2.37            71.0
+     9 Germany  1968      2.28            70.6
+    10 Germany  1969      2.17            70.5
+    # ℹ 102 more rows
+
+#### Unite
+
+Función inversa de separate()
+
+``` r
+dat %>% 
+  separate(name, c("year", "name1", "name2"),
+           fill="right", convert = TRUE) %>% 
+  unite(variable_name, name1, name2)
+```
+
+    # A tibble: 224 × 4
+       country  year variable_name   value
+       <chr>   <int> <chr>           <dbl>
+     1 Germany  1960 fertility_NA     2.41
+     2 Germany  1960 life_expectancy 69.3 
+     3 Germany  1961 fertility_NA     2.44
+     4 Germany  1961 life_expectancy 69.8 
+     5 Germany  1962 fertility_NA     2.47
+     6 Germany  1962 life_expectancy 70.0 
+     7 Germany  1963 fertility_NA     2.49
+     8 Germany  1963 life_expectancy 70.1 
+     9 Germany  1964 fertility_NA     2.49
+    10 Germany  1964 life_expectancy 70.7 
+    # ℹ 214 more rows
+
+Y finalmente, dispersar las columnas
+
+``` r
+dat %>% 
+  separate(name, c("year", "name1", "name2"),
+           fill="right", convert = TRUE) %>% #Separar 
+  unite(name, name1, name2) %>% #Unir como un solo nombre
+  spread(name, value) %>% #Spread() sirve como pivot_wide() 
+  rename(fertility = fertility_NA)
+```
+
+    # A tibble: 112 × 4
+       country  year fertility life_expectancy
+       <chr>   <int>     <dbl>           <dbl>
+     1 Germany  1960      2.41            69.3
+     2 Germany  1961      2.44            69.8
+     3 Germany  1962      2.47            70.0
+     4 Germany  1963      2.49            70.1
+     5 Germany  1964      2.49            70.7
+     6 Germany  1965      2.48            70.6
+     7 Germany  1966      2.44            70.8
+     8 Germany  1967      2.37            71.0
+     9 Germany  1968      2.28            70.6
+    10 Germany  1969      2.17            70.5
+    # ℹ 102 more rows
+
+Guardar como RDS
+
+``` r
+data_final <- dat %>% 
+  separate(name, c("year", "name1", "name2"),
+           fill="right", convert = TRUE) %>% #Separar 
+  unite(name, name1, name2) %>% #Unir como un solo nombre
+  spread(name, value) %>% #Spread() sirve como pivot_wide() 
+  rename(fertility = fertility_NA)
+saveRDS(data_final, "data_final.rds")
+```
