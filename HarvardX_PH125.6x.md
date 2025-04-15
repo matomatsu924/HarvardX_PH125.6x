@@ -1396,3 +1396,227 @@ length(setdiff(Awards_2016$playerID, top_names$playerID))
 ```
 
     [1] 46
+
+#### 2.3. Web Scraping
+
+El paquete rvest (incluído dentro de tidyverse), permite extraer
+información de páginas web (formato html y xml). Esto es posible a
+través de la función html_table()
+
+``` r
+library(rvest)
+```
+
+    Warning: package 'rvest' was built under R version 4.3.3
+
+``` r
+url <- "https://en.wikipedia.org/wiki/Murder_in_the_United_States_by_state"
+h <- read_html(url)
+class(h)
+```
+
+    [1] "xml_document" "xml_node"    
+
+``` r
+h
+```
+
+    {html_document}
+    <html class="client-nojs vector-feature-language-in-header-enabled vector-feature-language-in-main-page-header-disabled vector-feature-page-tools-pinned-disabled vector-feature-toc-pinned-clientpref-1 vector-feature-main-menu-pinned-disabled vector-feature-limited-width-clientpref-1 vector-feature-limited-width-content-enabled vector-feature-custom-font-size-clientpref-1 vector-feature-appearance-pinned-clientpref-1 vector-feature-night-mode-enabled skin-theme-clientpref-day vector-sticky-header-enabled vector-toc-available" lang="en" dir="ltr">
+    [1] <head>\n<meta http-equiv="Content-Type" content="text/html; charset=UTF-8 ...
+    [2] <body class="skin--responsive skin-vector skin-vector-search-vue mediawik ...
+
+Se utiliza la función html_nodes() para extraer elementos de la página,
+en este caso table. Revisar sus propiedades y extraer la tabla 2
+
+``` r
+tab <- h %>% html_nodes("table")
+tab <- tab[[2]]
+tab
+```
+
+    {html_node}
+    <table class="wikitable sortable sticky-header static-row-numbers sort-under col1left" style="text-align:right">
+    [1] <caption>Gun deaths by intent\n</caption>
+    [2] <tbody>\n<tr>\n<th>State</th>\n<th>Gun <br> deaths</th>\n<th>Suicide</th> ...
+
+Y se utiliza la función html_table() para convertir en data frame
+
+``` r
+tab <- tab %>% html_table()
+head(tab)
+```
+
+    # A tibble: 6 × 6
+      State         `Gun  deaths` Suicide Homicide Accident   Law
+      <chr>         <chr>         <chr>   <chr>       <int> <int>
+    1 United States 48,830        26,328  20,958        549   537
+    2 Texas         4,613         2,528   1,942          53    38
+    3 California    3,576         1,575   1,861          32    89
+    4 Florida       3,142         1,928   1,150          18    25
+    5 Georgia       2,200         1,115   1,021          25    22
+    6 Illinois      1,995         656     1,292          15    18
+
+#### Assessment: Web Scraping
+
+``` r
+library(rvest)
+url <- "https://web.archive.org/web/20181024132313/http://www.stevetheump.com/Payrolls.htm"
+h <- read_html(url)
+```
+
+We learned that tables in html are associated with the `table` node. 
+Use the `html_nodes()` function and the `table` node type to extract the
+first table. Store it in an object `nodes`:
+
+``` r
+nodes <- html_nodes(h, "table")
+```
+
+The `html_nodes()` function returns a list of objects of
+class `xml_node`. We can see the content of each one using, for example,
+the `html_text()` function. You can see the content for an arbitrarily
+picked component like this:
+
+``` r
+html_text(nodes[[8]])
+```
+
+    [1] "Team\nPayroll\nAverge\nMedianNew York Yankees\n$ 197,962,289\n$ 6,186,321\n$ 1,937,500Philadelphia Phillies\n$ 174,538,938\n$ 5,817,964\n$ 1,875,000Boston Red Sox\n$ 173,186,617\n$ 5,093,724\n$ 1,556,250Los Angeles Angels\n$ 154,485,166\n$ 5,327,074\n$ 3,150,000Detroit Tigers\n$ 132,300,000\n$ 4,562,068\n$ 1,100,000Texas Rangers\n$ 120,510,974\n$ 4,635,037\n$ 3,437,500Miami Marlins\n$ 118,078,000\n$ 4,373,259\n$ 1,500,000San Francisco Giants\n$ 117,620,683\n$ 3,920,689\n$ 1,275,000St. Louis Cardinals\n$ 110,300,862\n$ 3,939,316\n$ 800,000Milwaukee Brewers\n$ 97,653,944\n$ 3,755,920\n$ 1,981,250Chicago White Sox\n$ 96,919,500\n$ 3,876,780\n$ 530,000Los Angeles Dodgers\n$ 95,143,575\n$ 3,171,452\n$ 875,000Minnesota Twins\n$ 94,085,000\n$ 3,484,629\n$ 750,000New York Mets\n$ 93,353,983\n$ 3,457,554\n$ 875,000Chicago Cubs\n$ 88,197,033\n$ 3,392,193\n$ 1,262,500Atlanta Braves\n$ 83,309,942\n$ 2,776,998\n$ 577,500Cincinnati Reds\n$ 82,203,616\n$ 2,935,843\n$ 1,150,000Seattle Mariners\n$ 81,978,100\n$ 2,927,789\n$ 495,150Baltimore Orioles\n$ 81,428,999\n$ 2,807,896\n$ 1,300,000Washington Nationals\n$ 81,336,143\n$ 2,623,746\n$ 800,000Cleveland Indians\n$ 78,430,300\n$ 2,704,493\n$ 800,000Colorado Rockies\n$ 78,069,571\n$ 2,692,054\n$ 482,000Toronto Blue Jays\n$ 75,489,200\n$ 2,696,042\n$ 1,768,750Arizona Diamondbacks\n$ 74,284,833\n$ 2,653,029\n$ 1,625,000Tampa Bay Rays\n$ 64,173,500\n$ 2,291,910\n$ 1,425,000Pittsburgh Pirates\n$ 63,431,999\n$ 2,187,310\n$ 916,666Kansas City Royals\n$ 60,916,225\n$ 2,030,540\n$ 870,000Houston Astros\n$ 60,651,000\n$ 2,332,730\n$ 491,250Oakland Athletics\n$ 55,372,500\n$ 1,845,750\n$ 487,500San Diego Padres\n$ 55,244,700\n$ 1,973,025\n$ 1,207,500"
+
+If the content of this object is an html table, we can use
+the `html_table()` function to convert it to a data frame:
+
+``` r
+tab1 <- html_table(nodes[[8]])
+```
+
+``` r
+html_table(nodes[[8]])
+```
+
+    # A tibble: 30 × 4
+       Team                  Payroll       Averge      Median     
+       <chr>                 <chr>         <chr>       <chr>      
+     1 New York Yankees      $ 197,962,289 $ 6,186,321 $ 1,937,500
+     2 Philadelphia Phillies $ 174,538,938 $ 5,817,964 $ 1,875,000
+     3 Boston Red Sox        $ 173,186,617 $ 5,093,724 $ 1,556,250
+     4 Los Angeles Angels    $ 154,485,166 $ 5,327,074 $ 3,150,000
+     5 Detroit Tigers        $ 132,300,000 $ 4,562,068 $ 1,100,000
+     6 Texas Rangers         $ 120,510,974 $ 4,635,037 $ 3,437,500
+     7 Miami Marlins         $ 118,078,000 $ 4,373,259 $ 1,500,000
+     8 San Francisco Giants  $ 117,620,683 $ 3,920,689 $ 1,275,000
+     9 St. Louis Cardinals   $ 110,300,862 $ 3,939,316 $ 800,000  
+    10 Milwaukee Brewers     $ 97,653,944  $ 3,755,920 $ 1,981,250
+    # ℹ 20 more rows
+
+#### Question 3
+
+1 point possible (graded)
+
+Create a table called `tab_1` using entry 10 of `nodes`. Create a table
+called `tab_2` using entry 19 of `nodes`.
+
+Note that the column names should be `c("Team", "Payroll", "Average")`.
+You can see that these column names are actually in the first data row
+of each table, and that `tab_1` has an extra first column `No.` that
+should be removed so that the column names for both tables match.
+
+Remove the extra column in `tab_1`, remove the first row of each
+dataset, and change the column names for each table to
+`c("Team", "Payroll", "Average")`. Use a `full_join()` by the `Team` to
+combine these two tables.
+
+How many rows are in the joined data table?
+
+``` r
+library(tidyverse)
+tab1 <- html_table(nodes[[10]])
+head(tab1)
+```
+
+    # A tibble: 6 × 4
+      X1    X2                    X3           X4        
+      <chr> <chr>                 <chr>        <chr>     
+    1 No.   Team                  Payroll      Average   
+    2 1.    New York Yankees      $206,333,389 $8,253,336
+    3 2.    Boston Red Sox        $162,747,333 $5,611,977
+    4 3.    Chicago Cubs          $146,859,000 $5,439,222
+    5 4.    Philadelphia Phillies $141,927,381 $5,068,835
+    6 5.    New York Mets         $132,701,445 $5,103,902
+
+``` r
+nrow(tab1)
+```
+
+    [1] 31
+
+``` r
+tab1 <- tab1 %>% select("X2","X3","X4") %>% slice(2:31) %>% set_names(c("Team", "Payroll", "Average"))
+head(tab1)
+```
+
+    # A tibble: 6 × 3
+      Team                  Payroll      Average   
+      <chr>                 <chr>        <chr>     
+    1 New York Yankees      $206,333,389 $8,253,336
+    2 Boston Red Sox        $162,747,333 $5,611,977
+    3 Chicago Cubs          $146,859,000 $5,439,222
+    4 Philadelphia Phillies $141,927,381 $5,068,835
+    5 New York Mets         $132,701,445 $5,103,902
+    6 Detroit Tigers        $122,864,929 $4,550,553
+
+``` r
+tab2 <- html_table(nodes[[19]])
+head(tab2)
+```
+
+    # A tibble: 6 × 3
+      X1          X2           X3        
+      <chr>       <chr>        <chr>     
+    1 Team        Payroll      Average   
+    2 NY Yankees  $109,791,893 $3,541,674
+    3 Boston      $109,558,908 $3,423,716
+    4 Los Angeles $108,980,952 $3,757,964
+    5 NY Mets     $93,174,428  $3,327,658
+    6 Cleveland   $91,974,979  $3,065,833
+
+``` r
+nrow(tab2)
+```
+
+    [1] 31
+
+``` r
+tab2 <- tab2 %>% slice(2:nrow(tab2)) %>% set_names(c("Team", "Payroll", "Average"))
+head(tab2)
+```
+
+    # A tibble: 6 × 3
+      Team        Payroll      Average   
+      <chr>       <chr>        <chr>     
+    1 NY Yankees  $109,791,893 $3,541,674
+    2 Boston      $109,558,908 $3,423,716
+    3 Los Angeles $108,980,952 $3,757,964
+    4 NY Mets     $93,174,428  $3,327,658
+    5 Cleveland   $91,974,979  $3,065,833
+    6 Atlanta     $91,851,687  $2,962,958
+
+``` r
+full_join(tab1,tab2, by="Team")
+```
+
+    # A tibble: 58 × 5
+       Team                  Payroll.x    Average.x  Payroll.y   Average.y 
+       <chr>                 <chr>        <chr>      <chr>       <chr>     
+     1 New York Yankees      $206,333,389 $8,253,336 <NA>        <NA>      
+     2 Boston Red Sox        $162,747,333 $5,611,977 <NA>        <NA>      
+     3 Chicago Cubs          $146,859,000 $5,439,222 $64,015,833 $2,462,147
+     4 Philadelphia Phillies $141,927,381 $5,068,835 <NA>        <NA>      
+     5 New York Mets         $132,701,445 $5,103,902 <NA>        <NA>      
+     6 Detroit Tigers        $122,864,929 $4,550,553 <NA>        <NA>      
+     7 Chicago White Sox     $108,273,197 $4,164,354 $62,363,000 $2,309,741
+     8 Los Angeles Angels    $105,013,667 $3,621,161 <NA>        <NA>      
+     9 Seattle Mariners      $98,376,667  $3,513,452 <NA>        <NA>      
+    10 San Francisco Giants  $97,828,833  $3,493,887 <NA>        <NA>      
+    # ℹ 48 more rows
