@@ -743,3 +743,656 @@ tmp2
      9 E     admitted_men      28
     10 E     applicants_men   191
     # ℹ 14 more rows
+
+## Section 2: Tidy Data
+
+### 2.2. Combining Tables
+
+#### Combining Tables
+
+``` r
+library(dslabs)
+library(tidyverse)
+library(ggrepel)
+data(murders)
+#View(murders)
+data(results_us_election_2016)
+#View(results_us_election_2016)
+#Ordenar datos por orden alfabético de state a través de arrange
+results_us_election_2016 <- results_us_election_2016 %>% arrange(state)
+```
+
+Por medio de la función left_join, es posible unir tablas por una
+variable en común. En este caso, la variable state:
+
+``` r
+tab <- left_join(murders, results_us_election_2016, by="state")
+head(tab)
+```
+
+           state abb region population total electoral_votes clinton trump others
+    1    Alabama  AL  South    4779736   135               9    34.4  62.1    3.6
+    2     Alaska  AK   West     710231    19               3    36.6  51.3   12.2
+    3    Arizona  AZ   West    6392017   232              11    45.1  48.7    6.2
+    4   Arkansas  AR  South    2915918    93               6    33.7  60.6    5.8
+    5 California  CA   West   37253956  1257              55    61.7  31.6    6.7
+    6   Colorado  CO   West    5029196    65               9    48.2  43.3    8.6
+
+``` r
+#View(tab)
+```
+
+Graficar
+
+``` r
+tab %>% ggplot(aes(population/10^6, electoral_votes, label=abb)) +
+  geom_point()+
+  geom_text_repel()+
+  scale_x_continuous(trans = "log2") +
+  scale_y_continuous(trans= "log2") +
+  geom_smooth(method = "lm", se=FALSE) +
+  xlab("Population (10^6)")+
+  ylab("Electoral votes (log)")+
+  theme_bw()
+```
+
+![](HarvardX_PH125.6x_files/figure-commonmark/unnamed-chunk-43-1.png)
+
+``` r
+ggsave("images/plot2.png")
+```
+
+Otro ejemplo
+
+``` r
+tab1 <- slice(murders, 1:6) %>% select(state,population)
+tab1
+```
+
+           state population
+    1    Alabama    4779736
+    2     Alaska     710231
+    3    Arizona    6392017
+    4   Arkansas    2915918
+    5 California   37253956
+    6   Colorado    5029196
+
+``` r
+tab2 <- slice(results_us_election_2016, c(1:3, 5, 7:8)) %>% 
+  select(state,electoral_votes)
+tab2
+```
+
+            state electoral_votes
+    1     Alabama               9
+    2      Alaska               3
+    3     Arizona              11
+    4  California              55
+    5 Connecticut               7
+    6    Delaware               3
+
+``` r
+left_join(tab1, tab2)
+```
+
+           state population electoral_votes
+    1    Alabama    4779736               9
+    2     Alaska     710231               3
+    3    Arizona    6392017              11
+    4   Arkansas    2915918              NA
+    5 California   37253956              55
+    6   Colorado    5029196              NA
+
+Otras formas de unir:
+
+``` r
+tab1 %>% left_join(tab2)
+```
+
+           state population electoral_votes
+    1    Alabama    4779736               9
+    2     Alaska     710231               3
+    3    Arizona    6392017              11
+    4   Arkansas    2915918              NA
+    5 California   37253956              55
+    6   Colorado    5029196              NA
+
+``` r
+tab1 %>% right_join(tab2)
+```
+
+            state population electoral_votes
+    1     Alabama    4779736               9
+    2      Alaska     710231               3
+    3     Arizona    6392017              11
+    4  California   37253956              55
+    5 Connecticut         NA               7
+    6    Delaware         NA               3
+
+Si quiero conservar sólo las filas que tienen información en ambas
+tablas, utilizo inner_join()
+
+``` r
+inner_join(tab1, tab2)
+```
+
+           state population electoral_votes
+    1    Alabama    4779736               9
+    2     Alaska     710231               3
+    3    Arizona    6392017              11
+    4 California   37253956              55
+
+Si quiero conservar todas las filas, aunque tengan valores nulos,
+utilizo full_join()
+
+``` r
+full_join(tab1,tab2)
+```
+
+            state population electoral_votes
+    1     Alabama    4779736               9
+    2      Alaska     710231               3
+    3     Arizona    6392017              11
+    4    Arkansas    2915918              NA
+    5  California   37253956              55
+    6    Colorado    5029196              NA
+    7 Connecticut         NA               7
+    8    Delaware         NA               3
+
+La función semi_join() conserva la información de la tabla 1 que también
+está en la tabla 2
+
+``` r
+semi_join(tab1, tab2)
+```
+
+           state population
+    1    Alabama    4779736
+    2     Alaska     710231
+    3    Arizona    6392017
+    4 California   37253956
+
+La función anti_join() conserva la información de la tabla 1 que no está
+en la tabla 2. Es una función inversa de semi_join()
+
+``` r
+anti_join(tab1,tab2)
+```
+
+         state population
+    1 Arkansas    2915918
+    2 Colorado    5029196
+
+#### Binding
+
+La función bind_cols() combina tablas por columnas sin importar las
+variables en común
+
+``` r
+bind_cols(a=1:3,b=4:6)
+```
+
+    # A tibble: 3 × 2
+          a     b
+      <int> <int>
+    1     1     4
+    2     2     5
+    3     3     6
+
+También sirve para concatenar data frames
+
+``` r
+tab1 <- tab[,1:3]
+tab2 <- tab[,4:6]
+tab3 <- tab[,7:9]
+new_tab <- bind_cols(tab1,tab2,tab3)
+head(new_tab)
+```
+
+           state abb region population total electoral_votes clinton trump others
+    1    Alabama  AL  South    4779736   135               9    34.4  62.1    3.6
+    2     Alaska  AK   West     710231    19               3    36.6  51.3   12.2
+    3    Arizona  AZ   West    6392017   232              11    45.1  48.7    6.2
+    4   Arkansas  AR  South    2915918    93               6    33.7  60.6    5.8
+    5 California  CA   West   37253956  1257              55    61.7  31.6    6.7
+    6   Colorado  CO   West    5029196    65               9    48.2  43.3    8.6
+
+bind_rows() funciona de manera similar, pero concatenando filas
+
+``` r
+tab1 <- tab[1:2,]
+tab2 <- tab[3:4,]
+bind_rows(tab1, tab2)
+```
+
+         state abb region population total electoral_votes clinton trump others
+    1  Alabama  AL  South    4779736   135               9    34.4  62.1    3.6
+    2   Alaska  AK   West     710231    19               3    36.6  51.3   12.2
+    3  Arizona  AZ   West    6392017   232              11    45.1  48.7    6.2
+    4 Arkansas  AR  South    2915918    93               6    33.7  60.6    5.8
+
+#### Set operators
+
+Intersect() aplica para vectores y para data frames
+
+``` r
+intersect(1:10, 6:15)
+```
+
+    [1]  6  7  8  9 10
+
+``` r
+head(tab,7)
+```
+
+            state abb    region population total electoral_votes clinton trump
+    1     Alabama  AL     South    4779736   135               9    34.4  62.1
+    2      Alaska  AK      West     710231    19               3    36.6  51.3
+    3     Arizona  AZ      West    6392017   232              11    45.1  48.7
+    4    Arkansas  AR     South    2915918    93               6    33.7  60.6
+    5  California  CA      West   37253956  1257              55    61.7  31.6
+    6    Colorado  CO      West    5029196    65               9    48.2  43.3
+    7 Connecticut  CT Northeast    3574097    97               7    54.6  40.9
+      others
+    1    3.6
+    2   12.2
+    3    6.2
+    4    5.8
+    5    6.7
+    6    8.6
+    7    4.5
+
+``` r
+tab1 <- tab[1:5,]
+tab1
+```
+
+           state abb region population total electoral_votes clinton trump others
+    1    Alabama  AL  South    4779736   135               9    34.4  62.1    3.6
+    2     Alaska  AK   West     710231    19               3    36.6  51.3   12.2
+    3    Arizona  AZ   West    6392017   232              11    45.1  48.7    6.2
+    4   Arkansas  AR  South    2915918    93               6    33.7  60.6    5.8
+    5 California  CA   West   37253956  1257              55    61.7  31.6    6.7
+
+``` r
+tab2 <- tab[3:7,]
+tab2
+```
+
+            state abb    region population total electoral_votes clinton trump
+    3     Arizona  AZ      West    6392017   232              11    45.1  48.7
+    4    Arkansas  AR     South    2915918    93               6    33.7  60.6
+    5  California  CA      West   37253956  1257              55    61.7  31.6
+    6    Colorado  CO      West    5029196    65               9    48.2  43.3
+    7 Connecticut  CT Northeast    3574097    97               7    54.6  40.9
+      others
+    3    6.2
+    4    5.8
+    5    6.7
+    6    8.6
+    7    4.5
+
+``` r
+intersect(tab1, tab2)
+```
+
+           state abb region population total electoral_votes clinton trump others
+    1    Arizona  AZ   West    6392017   232              11    45.1  48.7    6.2
+    2   Arkansas  AR  South    2915918    93               6    33.7  60.6    5.8
+    3 California  CA   West   37253956  1257              55    61.7  31.6    6.7
+
+Unión funciona similar para vectores y data frames
+
+``` r
+union(c("a","b","c"), c("b","c","d"))
+```
+
+    [1] "a" "b" "c" "d"
+
+``` r
+head(tab,7)
+```
+
+            state abb    region population total electoral_votes clinton trump
+    1     Alabama  AL     South    4779736   135               9    34.4  62.1
+    2      Alaska  AK      West     710231    19               3    36.6  51.3
+    3     Arizona  AZ      West    6392017   232              11    45.1  48.7
+    4    Arkansas  AR     South    2915918    93               6    33.7  60.6
+    5  California  CA      West   37253956  1257              55    61.7  31.6
+    6    Colorado  CO      West    5029196    65               9    48.2  43.3
+    7 Connecticut  CT Northeast    3574097    97               7    54.6  40.9
+      others
+    1    3.6
+    2   12.2
+    3    6.2
+    4    5.8
+    5    6.7
+    6    8.6
+    7    4.5
+
+``` r
+tab1 <- tab[1:5,]
+tab2 <- tab[3:7,]
+union(tab1,tab2)
+```
+
+            state abb    region population total electoral_votes clinton trump
+    1     Alabama  AL     South    4779736   135               9    34.4  62.1
+    2      Alaska  AK      West     710231    19               3    36.6  51.3
+    3     Arizona  AZ      West    6392017   232              11    45.1  48.7
+    4    Arkansas  AR     South    2915918    93               6    33.7  60.6
+    5  California  CA      West   37253956  1257              55    61.7  31.6
+    6    Colorado  CO      West    5029196    65               9    48.2  43.3
+    7 Connecticut  CT Northeast    3574097    97               7    54.6  40.9
+      others
+    1    3.6
+    2   12.2
+    3    6.2
+    4    5.8
+    5    6.7
+    6    8.6
+    7    4.5
+
+La función setdiff() permite encontrar todas las filas de x que no están
+en y. Por lo tanto, el orden de los argumentos importa.
+
+``` r
+setdiff(1:10,6:15)
+```
+
+    [1] 1 2 3 4 5
+
+``` r
+setdiff(6:15,1:10) 
+```
+
+    [1] 11 12 13 14 15
+
+``` r
+head(tab,7)
+```
+
+            state abb    region population total electoral_votes clinton trump
+    1     Alabama  AL     South    4779736   135               9    34.4  62.1
+    2      Alaska  AK      West     710231    19               3    36.6  51.3
+    3     Arizona  AZ      West    6392017   232              11    45.1  48.7
+    4    Arkansas  AR     South    2915918    93               6    33.7  60.6
+    5  California  CA      West   37253956  1257              55    61.7  31.6
+    6    Colorado  CO      West    5029196    65               9    48.2  43.3
+    7 Connecticut  CT Northeast    3574097    97               7    54.6  40.9
+      others
+    1    3.6
+    2   12.2
+    3    6.2
+    4    5.8
+    5    6.7
+    6    8.6
+    7    4.5
+
+``` r
+tab1 <- tab[1:5,]
+tab2 <- tab[3:7,]
+setdiff(tab1,tab2)
+```
+
+        state abb region population total electoral_votes clinton trump others
+    1 Alabama  AL  South    4779736   135               9    34.4  62.1    3.6
+    2  Alaska  AK   West     710231    19               3    36.6  51.3   12.2
+
+Por último, la función setequal() returna TRUE si x y y contienen las
+mismas filas sin importar el orden:
+
+``` r
+setequal(1:5, 1:6)
+```
+
+    [1] FALSE
+
+``` r
+setequal(1:5,5:1)
+```
+
+    [1] TRUE
+
+``` r
+setequal(tab1, tab2)
+```
+
+    [1] FALSE
+
+#### Assessment: Combining Tables
+
+``` r
+library(Lahman)
+library(writexl)
+#View(Batting)
+top <- Batting %>%
+  filter(yearID==2016) %>% 
+  arrange(desc(HR)) %>% #arrange by descending HR count
+  slice(1:10)  #Take entries 1:10
+top %>% as_tibble()
+```
+
+    # A tibble: 10 × 22
+       playerID  yearID stint teamID lgID      G    AB     R     H   X2B   X3B    HR
+       <chr>      <int> <int> <fct>  <fct> <int> <int> <int> <int> <int> <int> <int>
+     1 trumbma01   2016     1 BAL    AL      159   613    94   157    27     1    47
+     2 cruzne02    2016     1 SEA    AL      155   589    96   169    27     1    43
+     3 daviskh01   2016     1 OAK    AL      150   555    85   137    24     2    42
+     4 doziebr01   2016     1 MIN    AL      155   615   104   165    35     5    42
+     5 encared01   2016     1 TOR    AL      160   601    99   158    34     0    42
+     6 arenano01   2016     1 COL    NL      160   618   116   182    35     6    41
+     7 cartech02   2016     1 MIL    NL      160   549    84   122    27     1    41
+     8 frazito01   2016     1 CHA    AL      158   590    89   133    21     0    40
+     9 bryankr01   2016     1 CHN    NL      155   603   121   176    35     3    39
+    10 canoro01    2016     1 SEA    AL      161   655   107   195    33     2    39
+    # ℹ 10 more variables: RBI <int>, SB <int>, CS <int>, BB <int>, SO <int>,
+    #   IBB <int>, HBP <int>, SH <int>, SF <int>, GIDP <int>
+
+Revisar el data frame People, que tiene información demográfica de todos
+los jugadores
+
+``` r
+People %>% as_tibble()
+```
+
+    # A tibble: 21,010 × 26
+       playerID  birthYear birthMonth birthDay birthCity    birthCountry birthState
+       <chr>         <int>      <int>    <int> <chr>        <chr>        <chr>     
+     1 aardsda01      1981         12       27 Denver       USA          CO        
+     2 aaronha01      1934          2        5 Mobile       USA          AL        
+     3 aaronto01      1939          8        5 Mobile       USA          AL        
+     4 aasedo01       1954          9        8 Orange       USA          CA        
+     5 abadan01       1972          8       25 Palm Beach   USA          FL        
+     6 abadfe01       1985         12       17 La Romana    D.R.         La Romana 
+     7 abadijo01      1850         11        4 Philadelphia USA          PA        
+     8 abbated01      1877          4       15 Latrobe      USA          PA        
+     9 abbeybe01      1869         11       11 Essex        USA          VT        
+    10 abbeych01      1866         10       14 Falls City   USA          NE        
+    # ℹ 21,000 more rows
+    # ℹ 19 more variables: deathYear <int>, deathMonth <int>, deathDay <int>,
+    #   deathCountry <chr>, deathState <chr>, deathCity <chr>, nameFirst <chr>,
+    #   nameLast <chr>, nameGiven <chr>, weight <int>, height <int>, bats <fct>,
+    #   throws <fct>, debut <chr>, bbrefID <chr>, finalGame <chr>, retroID <chr>,
+    #   deathDate <date>, birthDate <date>
+
+``` r
+#View(People)
+```
+
+Vincular información al top 10:
+
+``` r
+top_names <- top %>%
+  left_join(People) %>% 
+  select(playerID,nameFirst, nameLast, HR)
+top_names
+```
+
+        playerID nameFirst    nameLast HR
+    1  trumbma01      Mark      Trumbo 47
+    2   cruzne02    Nelson        Cruz 43
+    3  daviskh01     Khris       Davis 42
+    4  doziebr01     Brian      Dozier 42
+    5  encared01     Edwin Encarnacion 42
+    6  arenano01     Nolan     Arenado 41
+    7  cartech02     Chris      Carter 41
+    8  frazito01      Todd     Frazier 40
+    9  bryankr01      Kris      Bryant 39
+    10  canoro01  Robinson        Cano 39
+
+``` r
+#View(top_names)
+saveRDS(top_names, "data/top_names.rds")
+write_csv(top_names, "data/top_names.csv")
+write_rds(top_names, "data/top_names2.rds")
+```
+
+#### Question 6
+
+Inspect the `Salaries` data frame. Filter this data frame to the 2016
+salaries, then use the correct bind join function to add
+a `salary` column to the `top_names` data frame from the previous
+question. Name the new data frame `top_salary`. Use this code framework:
+
+``` r
+#View(Salaries)
+top_salaries <- Salaries %>%
+  filter(yearID==2016) %>% 
+  right_join(top_names)
+top_salaries
+```
+
+       yearID teamID lgID  playerID   salary nameFirst    nameLast HR
+    1    2016    BAL   AL trumbma01  9150000      Mark      Trumbo 47
+    2    2016    CHA   AL frazito01  8250000      Todd     Frazier 40
+    3    2016    CHN   NL bryankr01   652000      Kris      Bryant 39
+    4    2016    COL   NL arenano01  5000000     Nolan     Arenado 41
+    5    2016    MIL   NL cartech02  2500000     Chris      Carter 41
+    6    2016    MIN   AL doziebr01  3000000     Brian      Dozier 42
+    7    2016    OAK   AL daviskh01   524500     Khris       Davis 42
+    8    2016    SEA   AL  canoro01 24000000  Robinson        Cano 39
+    9    2016    SEA   AL  cruzne02 14250000    Nelson        Cruz 43
+    10   2016    TOR   AL encared01 10000000     Edwin Encarnacion 42
+
+``` r
+write_xlsx(top_salaries, "data/top_salaries.xlsx")
+```
+
+#### Question 7
+
+Inspect the `AwardsPlayers` table. Filter awards to include only the
+year 2016.
+
+How many players from the top 10 home run hitters won at least one award
+in 2016?
+
+``` r
+#View(AwardsPlayers)
+AwardsPlayers_2016 <- AwardsPlayers %>% 
+  filter(yearID==2016) 
+top_names %>% left_join(AwardsPlayers_2016)
+```
+
+        playerID nameFirst    nameLast HR              awardID yearID lgID  tie
+    1  trumbma01      Mark      Trumbo 47       Silver Slugger   2016   AL <NA>
+    2   cruzne02    Nelson        Cruz 43                 <NA>     NA <NA> <NA>
+    3  daviskh01     Khris       Davis 42                 <NA>     NA <NA> <NA>
+    4  doziebr01     Brian      Dozier 42                 <NA>     NA <NA> <NA>
+    5  encared01     Edwin Encarnacion 42                 <NA>     NA <NA> <NA>
+    6  arenano01     Nolan     Arenado 41       Silver Slugger   2016   NL <NA>
+    7  arenano01     Nolan     Arenado 41           Gold Glove   2016   NL <NA>
+    8  cartech02     Chris      Carter 41                 <NA>     NA <NA> <NA>
+    9  frazito01      Todd     Frazier 40                 <NA>     NA <NA> <NA>
+    10 bryankr01      Kris      Bryant 39 Most Valuable Player   2016   NL <NA>
+    11 bryankr01      Kris      Bryant 39     Hank Aaron Award   2016   NL <NA>
+    12 bryankr01      Kris      Bryant 39         TSN All-Star   2016   NL <NA>
+    13  canoro01  Robinson        Cano 39                 <NA>     NA <NA> <NA>
+       notes
+    1     OF
+    2   <NA>
+    3   <NA>
+    4   <NA>
+    5   <NA>
+    6     3B
+    7     3B
+    8   <NA>
+    9   <NA>
+    10  <NA>
+    11    3B
+    12    3B
+    13  <NA>
+
+How many players won an award in 2016 but were not one of the top 10
+home run hitters in 2016?
+
+``` r
+dat_awa <- AwardsPlayers_2016 %>%
+  anti_join(top_names) %>% 
+  select(playerID) %>% 
+  unique()
+dat_awa
+```
+
+        playerID
+    1  altuvjo01
+    2  rizzoan01
+    3  lindofr01
+    4  hosmeer01
+    5  lestejo01
+    6  mcgowdu01
+    7  perezsa02
+    8  cabremi01
+    10 donaljo02
+    11 bogaexa01
+    12 bettsmo01
+    13 troutmi01
+    14 ortizda01
+    15 ramoswi01
+    17 murphda08
+    18 seageco01
+    19 blackch02
+    20 cespeyo01
+    21 yelicch01
+    22 arrieja01
+    24 morelmi01
+    25 kinslia01
+    26 beltrad01
+    28 gardnbr01
+    29 kiermke01
+    31 keuchda01
+    32 poseybu01
+    34 panikjo01
+    35 crawfbr01
+    36 martest01
+    37 inciaen01
+    38 heywaja01
+    39 greinza01
+    41 porceri01
+    42 scherma01
+    43 fulmemi01
+    45 grandcu01
+    47 zobribe01
+    48 millean01
+    49  baezja01
+    52 rendoan01
+    54 brittza01
+    55 janseke01
+    58 klubeco01
+    62 freemfr01
+    77 bradlja02
+
+Otras formas de resolver los ejercicios:
+
+``` r
+Awards_2016 <- AwardsPlayers %>% filter(yearID == 2016)
+length(intersect(Awards_2016$playerID, top_names$playerID))
+```
+
+    [1] 3
+
+``` r
+length(setdiff(Awards_2016$playerID, top_names$playerID))
+```
+
+    [1] 46
