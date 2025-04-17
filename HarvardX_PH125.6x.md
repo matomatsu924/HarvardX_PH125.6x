@@ -1620,3 +1620,161 @@ full_join(tab1,tab2, by="Team")
      9 Seattle Mariners      $98,376,667  $3,513,452 <NA>        <NA>      
     10 San Francisco Giants  $97,828,833  $3,493,887 <NA>        <NA>      
     # ℹ 48 more rows
+
+## Section 3: String Processing
+
+### 3.1. String Processing Part 1
+
+#### String Parsing
+
+``` r
+s <- '10"'
+cat(s)
+```
+
+    10"
+
+``` r
+ss <- "10'"
+cat(ss)
+```
+
+    10'
+
+``` r
+#Scape the quote a través de /
+sss <- '5\'10"'
+cat(sss)
+```
+
+    5'10"
+
+``` r
+ssss <- "5'10\""
+cat(ssss)
+```
+
+    5'10"
+
+``` r
+# read in raw murders data from Wikipedia
+library(rvest)
+url <- "https://en.wikipedia.org/w/index.php?title=Gun_violence_in_the_United_States_by_state&direction=prev&oldid=810166167"
+murders_raw <- read_html(url) %>% 
+  html_nodes("table") %>% 
+  html_table() %>%
+  .[[1]] %>%
+  setNames(c("state", "population", "total", "murder_rate"))
+
+# inspect data and column classes
+head(murders_raw)
+```
+
+    # A tibble: 6 × 4
+      state      population total murder_rate
+      <chr>      <chr>      <chr>       <dbl>
+    1 Alabama    4,853,875  348           7.2
+    2 Alaska     737,709    59            8  
+    3 Arizona    6,817,565  309           4.5
+    4 Arkansas   2,977,853  181           6.1
+    5 California 38,993,940 1,861         4.8
+    6 Colorado   5,448,819  176           3.2
+
+``` r
+class(murders_raw$population)
+```
+
+    [1] "character"
+
+``` r
+class(murders_raw$total)
+```
+
+    [1] "character"
+
+``` r
+library(tidyverse)
+murders_raw$population[1:3]
+```
+
+    [1] "4,853,875" "737,709"   "6,817,565"
+
+``` r
+as.numeric(murders_raw$population[1:3]) #La coerción as.numeric() no funciona acá
+```
+
+    [1] NA NA NA
+
+Por lo tanto debe utilizarse stringr y sus funciones str\_ para
+modificar datos. En este caso, se utilizará str_detect() dentro de una
+función, para detectar si las columnas tienen comas.
+
+``` r
+commas <- function(x) any(str_detect(x,","))
+murders_raw %>% summarize_all(funs(commas))
+```
+
+    # A tibble: 1 × 4
+      state population total murder_rate
+      <lgl> <lgl>      <lgl> <lgl>      
+    1 FALSE TRUE       TRUE  FALSE      
+
+Utilizar la función str_replace_all() para reemplazar todos los valores
+que tengan coma por un espacio nulo y luego convertir el string a
+numeric.
+
+``` r
+test_1 <- str_replace_all(murders_raw$population, ",", "")
+test_1 <- as.numeric(test_1)
+head(test_1)
+```
+
+    [1]  4853875   737709  6817565  2977853 38993940  5448819
+
+También, es posible utilizar la función parse_number() que realiza los
+dos procedimiento de manera simultánea
+
+``` r
+test_2 <- parse_number(murders_raw$population)
+head(test_2)
+```
+
+    [1]  4853875   737709  6817565  2977853 38993940  5448819
+
+``` r
+identical(test_1,test_2)
+```
+
+    [1] TRUE
+
+La tabla final se obtendría a través del siguiente código:
+
+``` r
+murders_new <- murders_raw %>% mutate_at(2:3, parse_number) #La función mutate_at funciona como sapply. Se especifican las columnas en el primer argumento y en el segundo se aplica la función.
+head(murders_new)
+```
+
+    # A tibble: 6 × 4
+      state      population total murder_rate
+      <chr>           <dbl> <dbl>       <dbl>
+    1 Alabama       4853875   348         7.2
+    2 Alaska         737709    59         8  
+    3 Arizona       6817565   309         4.5
+    4 Arkansas      2977853   181         6.1
+    5 California   38993940  1861         4.8
+    6 Colorado      5448819   176         3.2
+
+#### Key points
+
+- Use the `str_detect()` function to determine whether a string contains
+  a certain pattern.
+
+- Use the `str_replace_all()` function to replace all instances of one
+  pattern with another pattern. To remove a pattern, replace with the
+  empty string (`""`).
+
+- The `parse_number()` function removes punctuation from strings and
+  converts them to numeric.
+
+- `mutate_at()` performs the same transformation on the specified column
+  numbers.
