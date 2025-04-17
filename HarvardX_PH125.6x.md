@@ -1778,3 +1778,647 @@ head(murders_new)
 
 - `mutate_at()` performs the same transformation on the specified column
   numbers.
+
+``` r
+library(dslabs)
+library(tidyverse)
+library(writexl)
+data("reported_heights")
+#View(reported_heights)
+
+class(reported_heights$height)
+```
+
+    [1] "character"
+
+``` r
+write_xlsx(reported_heights, "data/reported_heights.xlsx")
+```
+
+``` r
+# convert to numeric, inspect, count NAs
+x <- as.numeric(reported_heights$height)
+```
+
+    Warning: NAs introduced by coercion
+
+``` r
+head(x)
+```
+
+    [1] 75 70 68 74 61 65
+
+``` r
+sum(is.na(x))
+```
+
+    [1] 81
+
+``` r
+# keep only entries that result in NAs
+reported_heights %>% mutate(new_height = as.numeric(height)) %>%
+  filter(is.na(new_height)) %>% 
+  head(n=10)
+```
+
+    Warning: There was 1 warning in `mutate()`.
+    ℹ In argument: `new_height = as.numeric(height)`.
+    Caused by warning:
+    ! NAs introduced by coercion
+
+                time_stamp    sex                 height new_height
+    1  2014-09-02 15:16:28   Male                  5' 4"         NA
+    2  2014-09-02 15:16:37 Female                  165cm         NA
+    3  2014-09-02 15:16:52   Male                    5'7         NA
+    4  2014-09-02 15:16:56   Male                  >9000         NA
+    5  2014-09-02 15:16:56   Male                   5'7"         NA
+    6  2014-09-02 15:17:09 Female                   5'3"         NA
+    7  2014-09-02 15:18:00   Male 5 feet and 8.11 inches         NA
+    8  2014-09-02 15:19:48   Male                   5'11         NA
+    9  2014-09-04 00:46:45   Male                  5'9''         NA
+    10 2014-09-04 10:29:44   Male                 5'10''         NA
+
+``` r
+# calculate cutoffs that cover 99.999% of human population
+alpha <- 1/10^6
+qnorm(1-alpha/2, 69.1, 2.9)
+```
+
+    [1] 83.28575
+
+``` r
+qnorm(alpha/2, 63.7, 2.7)
+```
+
+    [1] 50.49258
+
+``` r
+# keep only entries that either result in NAs or are outside the plausible range of heights
+not_inches <- function(x, smallest = 50, tallest = 84){
+  inches <- suppressWarnings(as.numeric(x))
+  ind <- is.na(inches) | inches < smallest | inches > tallest
+  ind
+}
+
+# number of problematic entries
+problems <- reported_heights %>% 
+  filter(not_inches(height)) %>%
+  .$height
+length(problems)
+```
+
+    [1] 292
+
+``` r
+# 10 examples of x'y or x'y" or x'y\"
+pattern <- "^\\d\\s*'\\s*\\d{1,2}\\.*\\d*'*\"*$"
+str_subset(problems, pattern) %>% head(n=10) %>% cat
+```
+
+    5' 4" 5'7 5'7" 5'3" 5'11 5'9'' 5'10'' 5' 10 5'5" 5'2"
+
+``` r
+# 10 examples of x.y or x,y
+pattern <- "^[4-6]\\s*[\\.|,]\\s*([0-9]|10|11)$"
+str_subset(problems, pattern) %>% head(n=10) %>% cat
+```
+
+    5.3 5.5 6.5 5.8 5.6 5,3 5.9 6,8 5.5 6.2
+
+``` r
+# 10 examples of entries in cm rather than inches
+ind <- which(between(suppressWarnings(as.numeric(problems))/2.54, 54, 81) )
+ind <- ind[!is.na(ind)]
+problems[ind] %>% head(n=10) %>% cat
+```
+
+    150 175 177 178 163 175 178 165 165 180
+
+#### Regex
+
+Para detectar una coma
+
+``` r
+pattern <- ","
+str_detect(murders_raw$total,pattern )
+```
+
+     [1] FALSE FALSE FALSE FALSE  TRUE FALSE FALSE FALSE FALSE  TRUE FALSE FALSE
+    [13] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+    [25] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+    [37] FALSE FALSE FALSE FALSE FALSE FALSE FALSE  TRUE FALSE FALSE FALSE FALSE
+    [49] FALSE FALSE FALSE
+
+Para detectar valores que tienen cm, u otro patrón, se utiliza la
+función str_subset()-
+
+``` r
+str_subset(reported_heights$height, "cm")
+```
+
+    [1] "165cm"  "170 cm"
+
+``` r
+yes <- c("180 cm", "70 inches")
+no <- c("180", "70''")
+s <- c(yes, no)
+s
+```
+
+    [1] "180 cm"    "70 inches" "180"       "70''"     
+
+Detectar los valores con cm o inches
+
+``` r
+str_detect(s, "cm") | str_detect(s, "inches")
+```
+
+    [1]  TRUE  TRUE FALSE FALSE
+
+Otra forma de detectar cm o inches, a través de la expresión
+“cm\|inches”
+
+``` r
+str_detect(s, "cm|inches")
+```
+
+    [1]  TRUE  TRUE FALSE FALSE
+
+Para detectar patrones que incliyan dígitos , se utiliza la regex “\\d”.
+Por ejemplo:
+
+``` r
+yes <- c("5","6","5'10","5 feet", "4'11")
+no <- c("",".","Five","six")
+s <- c(yes,no)
+pattern <- "\\d"
+str_detect(s,pattern)
+```
+
+    [1]  TRUE  TRUE  TRUE  TRUE  TRUE FALSE FALSE FALSE FALSE
+
+La función str_view() resalta el primer patrón detectado
+
+``` r
+str_view(s,pattern)
+```
+
+    [1] │ <5>
+    [2] │ <6>
+    [3] │ <5>'<1><0>
+    [4] │ <5> feet
+    [5] │ <4>'<1><1>
+
+Mientras que la función str_view_all() muestra todo el patrón
+
+``` r
+str_view_all(s,pattern)
+```
+
+    Warning: `str_view_all()` was deprecated in stringr 1.5.0.
+    ℹ Please use `str_view()` instead.
+
+    [1] │ <5>
+    [2] │ <6>
+    [3] │ <5>'<1><0>
+    [4] │ <5> feet
+    [5] │ <4>'<1><1>
+    [6] │ 
+    [7] │ .
+    [8] │ Five
+    [9] │ six
+
+### Key points
+
+- A regular expression (regex) is a way to describe a specific pattern
+  of characters of text. A set of rules has been designed to do this
+  specifically and efficiently.
+
+- **stringr** functions can take a regex as a pattern.
+
+- `str_detect()` indicates whether a pattern is present in a string.
+
+- The main difference between a regex and a regular string is that a
+  regex can include special characters.
+
+- The \| symbol inside a regex means “or”.
+
+- Use `'\\d'` to represent digits. The backlash is used to distinguish
+  it from the character `'d'`. In R, you must use two backslashes for
+  digits in regular expressions; in some other languages, you will only
+  use one backslash for regex special characters.
+
+- `str_view()` highlights the first occurrence of a pattern, and the
+  `str_view_all()` function highlights all occurrences of the pattern.
+
+### **Character Classes, Anchors and Quantifiers**
+
+Si quiero resaltar carácteres específicos, debo expresarlos dentro de
+llaves
+
+``` r
+str_view(s,"[56]")
+```
+
+    [1] │ <5>
+    [2] │ <6>
+    [3] │ <5>'10
+    [4] │ <5> feet
+
+Si quiero detectar rangos, utilizo -. Por ejemplo, para las expresiones
+entre 4 y 7, la expresión regular sería “\[4-7\]”
+
+``` r
+yes <- as.character(4:7)
+no <- as.character(1:3)
+s <- c(yes,no)
+s
+```
+
+    [1] "4" "5" "6" "7" "1" "2" "3"
+
+``` r
+str_detect(s,"[4-7]")
+```
+
+    [1]  TRUE  TRUE  TRUE  TRUE FALSE FALSE FALSE
+
+``` r
+str_view(s,"[4-7]")
+```
+
+    [1] │ <4>
+    [2] │ <5>
+    [3] │ <6>
+    [4] │ <7>
+
+Para detectar todas las letras del alfabeto en minúsculas se utiliza la
+expresión “\[a-z\]” y en mayúscula “\[A-Z\]”. Para detectar todas las
+letras en minúscula o mayúscula la expresión sería “\[a-zA-Z\]”
+
+^ representa el principio de un string
+
+\$ representa el final de un string
+
+Para obtener los string que tienen un sólo dígito, se utilizaría la
+siguiente expresión:
+
+``` r
+pattern <- "^\\d$"
+yes <- c("1","5","9")
+no <- c("12","123", " 1", "a4", "b")
+s <- c(yes, no)
+str_view(s, pattern)
+```
+
+    [1] │ <1>
+    [2] │ <5>
+    [3] │ <9>
+
+Para obtener los string con uno o dos dígitos, se utiliza la expresión
+\\d{1,2}
+
+``` r
+pattern <- "^\\d{1,2}$"
+yes <- c("1","5","9","12")
+no <- c("123","a4","b")
+s <- c(yes, no)
+s
+```
+
+    [1] "1"   "5"   "9"   "12"  "123" "a4"  "b"  
+
+``` r
+str_view(s,pattern)
+```
+
+    [1] │ <1>
+    [2] │ <5>
+    [3] │ <9>
+    [4] │ <12>
+
+Para detectar el patrón número, pie, número, pulgada (ej. 5’7”) se
+utiliza la expresión “^\[4-7\]’\\d{1,2\]\\”\$”
+
+``` r
+pattern <- "^[4-7]'\\d{1,2}\"$"
+yes <- c("5'7\"", "6'2\"",  "5'12\"")
+no <- c("6,2\"", "6.2\"","I am 5'11\"", "3'2\"", "64")
+
+str_detect(yes,pattern)
+```
+
+    [1] TRUE TRUE TRUE
+
+``` r
+str_detect(no, pattern)
+```
+
+    [1] FALSE FALSE FALSE FALSE FALSE
+
+### Key points
+
+- Define strings to test your regular expressions, including some
+  elements that match and some that do not. This allows you to check for
+  the two types of errors: failing to match and matching incorrectly.
+
+- Square brackets define character classes: groups of characters that
+  count as matching the pattern. You can use ranges to define character
+  classes, such as `[0-9]` for digits and `[a-zA-Z]` for all letters.
+
+- Anchors define patterns that must start or end at specific places. `^`
+  and `$` represent the beginning and end of the string respectively.
+
+- Curly braces are quantifiers that state how many times a certain
+  character can be repeated in the pattern. `\\d{1,2}` matches exactly 1
+  or 2 consecutive digits.
+
+### Search and Replace with Regex
+
+Sólo 14 string cumplen con el patrón deseado
+
+``` r
+pattern <- "^[4-7]'\\d{1,2}\"$"
+sum(str_detect(problems,pattern))
+```
+
+    [1] 14
+
+Por ejemplo:
+
+``` r
+problems[c(2,10,11,12,15)] %>% str_view_all(pattern)
+```
+
+    [1] │ 5' 4"
+    [2] │ <5'7">
+    [3] │ <5'3">
+    [4] │ 5 feet and 8.11 inches
+    [5] │ 5.5
+
+El problema es que escribieron feet and inches en lugar de ’ y ”
+
+``` r
+str_subset(problems, "inches")
+```
+
+    [1] "5 feet and 8.11 inches" "Five foot eight inches" "5 feet 7inches"        
+    [4] "5ft 9 inches"           "5 ft 9 inches"          "5 feet 6 inches"       
+
+O ’ ’ en ligar de ”
+
+``` r
+str_subset(problems, "''")
+```
+
+     [1] "5'9''"   "5'10''"  "5'10''"  "5'3''"   "5'7''"   "5'6''"   "5'7.5''"
+     [8] "5'7.5''" "5'10''"  "5'11''"  "5'10''"  "5'5''"  
+
+Si no se usa el símbolo para pulgadas (“) al final, la expresión
+sería”^\[4-7\]’\\d{1,2}\$”
+
+``` r
+pattern <- "^[4-7]'\\d{1,2}$"
+problems %>% str_replace("feet|ft|foot", "'") %>% 
+  str_replace("inches|in|''|\"", "") %>% 
+  str_detect(pattern) %>% 
+  sum   
+```
+
+    [1] 48
+
+En regex es posible representar espacio con la expresión \\s
+
+``` r
+pattern2 <- "^[4-7]'\\s\\d{1,2}\"$"
+str_subset(problems,pattern2)
+```
+
+    [1] "5' 4\""  "5' 11\"" "5' 7\"" 
+
+También, es posible reemplazar una cantidad de caracteres similares de
+manera posterior a \* . Es decir, cero o más ejemplos del caracter
+previo. Esto también se puede aplicar después de espacio (\\s)
+
+``` r
+yes <- c("AB", "A1B", "A11B", "A111B", "A1111B")
+no <- c("A2B", "A21B")
+str_detect(yes, "A1*B") #Cero o más ejemplos del caracter previo a *
+```
+
+    [1] TRUE TRUE TRUE TRUE TRUE
+
+``` r
+str_detect(no, "A1*B")
+```
+
+    [1] FALSE FALSE
+
+``` r
+# test how *, ? and + differ
+data.frame(string = c("AB", "A1B", "A11B", "A111B", "A1111B"),
+           none_or_more = str_detect(yes, "A1*B"),
+           nore_or_once = str_detect(yes, "A1?B"),
+           once_or_more = str_detect(yes, "A1+B"))
+```
+
+      string none_or_more nore_or_once once_or_more
+    1     AB         TRUE         TRUE        FALSE
+    2    A1B         TRUE         TRUE         TRUE
+    3   A11B         TRUE        FALSE         TRUE
+    4  A111B         TRUE        FALSE         TRUE
+    5 A1111B         TRUE        FALSE         TRUE
+
+``` r
+pattern <- "^[4-7]\\s*'\\s*\\d{1,2}$"
+problems %>% 
+  str_replace("feet|ft|foot" ,"'") %>% #reemplazar con '
+  str_replace("inches|in|''|\"", "") %>% #remover todos los símbolos de inches
+  str_detect(pattern) %>% 
+  sum
+```
+
+    [1] 53
+
+- `str_replace()` replaces the first instance of the detected pattern
+  with a specified string.
+
+- Spaces are characters and R does not ignore them. Spaces are specified
+  by the special character `\\s`.
+
+- Additional quantifiers include `*, + and ?`. `*` means 0 or more
+  instances of the previous character. `?` means 0 or 1 instances. `+`
+  means 1 or more instances.
+
+- Before removing characters from strings with functions
+  like`str_replace()` and`str_replace_all()`, consider whether that
+  replacement would have unintended effects.
+
+### **Groups with Regex**
+
+``` r
+pattern_without_groups <- "[4-7],\\d*$"
+```
+
+``` r
+pattern_with_groups <- "^([4-7]),(\\d*)$"
+```
+
+``` r
+yes <- c("5,9","5,11","6,","6,1")
+no <- c("5'9", ",", "2,8", "6.1.1")
+s <- c(yes,no)
+str_detect(s,pattern_without_groups)
+```
+
+    [1]  TRUE  TRUE  TRUE  TRUE FALSE FALSE FALSE FALSE
+
+``` r
+str_detect(s,pattern_with_groups)
+```
+
+    [1]  TRUE  TRUE  TRUE  TRUE FALSE FALSE FALSE FALSE
+
+A través de str_match() , es posible obtener los grupos si el patrón a
+detectar está en grupos y str_extract() los extrae
+
+``` r
+str_match(s,pattern_with_groups)
+```
+
+         [,1]   [,2] [,3]
+    [1,] "5,9"  "5"  "9" 
+    [2,] "5,11" "5"  "11"
+    [3,] "6,"   "6"  ""  
+    [4,] "6,1"  "6"  "1" 
+    [5,] NA     NA   NA  
+    [6,] NA     NA   NA  
+    [7,] NA     NA   NA  
+    [8,] NA     NA   NA  
+
+La segunda y tercera columna representa los grupos, mientras que la
+primera columna representa el valor original. Una vez agrupadas las
+expresiones, es posible señalar cómo reemplazar el primero o segundo
+grupo a través de las expresiones \\1 y \\2 o la cantidad
+correspondiente. En este caso, reemplazar “,” por “’”
+
+``` r
+pattern_with_groups <- "^([4-7]),(\\d*)$"
+yes <- c("5,9","5,11","6,","6,1")
+no <- c("5'9", ",", "2,8", "6.1.1")
+s <- c(yes,no)
+str_replace(s,pattern_with_groups, "\\1'\\2")
+```
+
+    [1] "5'9"   "5'11"  "6'"    "6'1"   "5'9"   ","     "2,8"   "6.1.1"
+
+Identificar strings que cumplen las condiciones
+
+``` r
+pattern_with_groups <- "^([4-7])\\s*[,\\.\\s+]\\s*(\\d*)$"
+str_subset(problems,pattern_with_groups) %>% head 
+```
+
+    [1] "5.3"  "5.25" "5.5"  "6.5"  "5.8"  "5.6" 
+
+Luego , reemplazar
+
+``` r
+str_subset(problems, pattern_with_groups) %>% 
+  str_replace(pattern_with_groups, "\\1'\\2") %>% head
+```
+
+    [1] "5'3"  "5'25" "5'5"  "6'5"  "5'8"  "5'6" 
+
+``` r
+reemp1 <- str_subset(problems, pattern_with_groups) %>% 
+  str_replace(pattern_with_groups, "\\1'\\2")
+write_xlsx(as.data.frame(reemp1), "data/reemp_1.xlsx")
+```
+
+### Key Points
+
+- Groups are defined using parentheses.
+
+- Once we define groups, we can use the function `str_match()` to
+  extract the values these groups define. `str_extract()` extracts only
+  strings that match a pattern, not the values defined by groups.
+
+- You can refer to the `i`th group with `\\i.` For example, refer to the
+  value in the second group with `\\2`.
+
+### **Testing and Improving**
+
+``` r
+# function to detect entries with problems
+not_inches_or_cm <- function(x, smallest = 50, tallest = 84){
+    inches <- suppressWarnings(as.numeric(x))
+    ind <- !is.na(inches) &
+        ((inches >= smallest & inches <= tallest) |
+             (inches/2.54 >= smallest & inches/2.54 <= tallest))
+    !ind
+}
+
+# identify entries with problems
+problems <- reported_heights %>% 
+  filter(not_inches_or_cm(height)) %>%
+  .$height
+length(problems)
+```
+
+    [1] 200
+
+``` r
+#View(problems)
+```
+
+Para convertir algunos string
+
+``` r
+converted <- problems %>% 
+  str_replace("feet|foot|ft", "'") %>% 
+  str_replace("inches|in|''\"","") %>% 
+  str_replace("^([4-7])\\s*[,\\.\\s+]\\s*(\\d*)$", "\\1'\\2")
+#head(converted)
+```
+
+``` r
+pattern <- "^[4-7]\\s*'\\s*\\d{1,2}$"
+index <- str_detect(converted, pattern)
+mean(index)
+```
+
+    [1] 0.48
+
+Todos los string que no hacen parte del index, se obtienen a través de:
+
+``` r
+converted[!index]
+```
+
+      [1] "6"             "5' 4\""        "165cm"         "511"          
+      [5] "6"             "2"             ">9000"         "5'7\""        
+      [9] "5'3\""         "5 ' and 8.11 " "11111"         "5'9''"        
+     [13] "6"             "5'10''"        "103.2"         "19"           
+     [17] "5"             "300"           "6'"            "6"            
+     [21] "Five ' eight " "5'5\""         "5'2\""         "7"            
+     [25] "214"           "6"             "5'10''"        "5'3''"        
+     [29] "0.7"           "5'7''"         "6"             "2'33"         
+     [33] "5'3\""         "5'6''"         "612"           "1,70"         
+     [37] "87"            "5'7.5''"       "5'7.5''"       "111"          
+     [41] "5'2\""         "5' 7.78\""     "12"            "6"            
+     [45] "yyy"           "89"            "34"            "25"           
+     [49] "6"             "6"             "22"            "684"          
+     [53] "6"             "1"             "1"             "6*12"         
+     [57] "87"            "6"             "1.6"           "120"          
+     [61] "120"           "23"            "1.7"           "6"            
+     [65] "5'8\""         "5'11\""        "5'7\""         "5' 11\""      
+     [69] "5"             "6'1\""         "69\""          "5' 7\""       
+     [73] "5'10''"        "5' 9 "         "5 ' 9 "        "6"            
+     [77] "5'11''"        "5'8\""         "6"             "86"           
+     [81] "708,661"       "5 ' 6 "        "5'10''"        "6"            
+     [85] "6'3\""         "649,606"       "10000"         "1"            
+     [89] "728,346"       "0"             "5'5''"         "5'7\""        
+     [93] "6"             "6"             "6"             "100"          
+     [97] "6'4\""         "88"            "6"             "170 cm"       
+    [101] "7,283,465"     "5"             "5"             "34"           
