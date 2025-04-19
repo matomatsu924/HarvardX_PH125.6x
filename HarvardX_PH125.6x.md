@@ -2422,3 +2422,618 @@ converted[!index]
      [93] "6"             "6"             "6"             "100"          
      [97] "6'4\""         "88"            "6"             "170 cm"       
     [101] "7,283,465"     "5"             "5"             "34"           
+
+### **String Splitting**
+
+``` r
+# read raw murders data line by line
+library(tidyverse)
+filename <- system.file("extdata/murders.csv", package = "dslabs")
+lines <- readLines(filename)
+lines %>% head()
+```
+
+    [1] "state,abb,region,population,total" "Alabama,AL,South,4779736,135"     
+    [3] "Alaska,AK,West,710231,19"          "Arizona,AZ,West,6392017,232"      
+    [5] "Arkansas,AR,South,2915918,93"      "California,CA,West,37253956,1257" 
+
+Para separar archivos separados por coma, se utiliza la función
+str_split()
+
+``` r
+x <- str_split(lines, ",")
+x %>% head
+```
+
+    [[1]]
+    [1] "state"      "abb"        "region"     "population" "total"     
+
+    [[2]]
+    [1] "Alabama" "AL"      "South"   "4779736" "135"    
+
+    [[3]]
+    [1] "Alaska" "AK"     "West"   "710231" "19"    
+
+    [[4]]
+    [1] "Arizona" "AZ"      "West"    "6392017" "232"    
+
+    [[5]]
+    [1] "Arkansas" "AR"       "South"    "2915918"  "93"      
+
+    [[6]]
+    [1] "California" "CA"         "West"       "37253956"   "1257"      
+
+``` r
+col_names <- x[[1]]
+col_names #Extraer los nombres de los estados
+```
+
+    [1] "state"      "abb"        "region"     "population" "total"     
+
+``` r
+x <- x[-1] #Extraer exclusivamente los datos, sin encabezado
+```
+
+La función map, del paquete purrr permite aplicar una función
+simultáneamente
+
+``` r
+library(purrr)
+map(x, function(y)y[1]) %>% head()
+```
+
+    [[1]]
+    [1] "Alabama"
+
+    [[2]]
+    [1] "Alaska"
+
+    [[3]]
+    [1] "Arizona"
+
+    [[4]]
+    [1] "Arkansas"
+
+    [[5]]
+    [1] "California"
+
+    [[6]]
+    [1] "Colorado"
+
+Otra forma
+
+``` r
+map(x, 1) %>% head()
+```
+
+    [[1]]
+    [1] "Alabama"
+
+    [[2]]
+    [1] "Alaska"
+
+    [[3]]
+    [1] "Arizona"
+
+    [[4]]
+    [1] "Arkansas"
+
+    [[5]]
+    [1] "California"
+
+    [[6]]
+    [1] "Colorado"
+
+Las funciones map_chr() retorna un vector de caracteres y map_int()
+retorna vector de enteros
+
+``` r
+dat <- data.frame(map_chr(x,1), #Convierte vectores en caracteres
+                  map_chr(x,2),
+                  map_chr(x,3),
+                  map_chr(x,4),
+                  map_chr(x,5)) %>% 
+  mutate_all(parse_guess) %>% #Transforma todos los vectores al tipo de datos que el programa suponga (double, char, logical...)
+  set_names(col_names) #Asigna nombre a los vectores
+dat %>% head 
+```
+
+           state abb region population total
+    1    Alabama  AL  South    4779736   135
+    2     Alaska  AK   West     710231    19
+    3    Arizona  AZ   West    6392017   232
+    4   Arkansas  AR  South    2915918    93
+    5 California  CA   West   37253956  1257
+    6   Colorado  CO   West    5029196    65
+
+Se obtiene código más sencillo a través de stringr y el argumento
+simpligy = TRUE esto obliga a la función a retornar una matriz en lugar
+de una lista
+
+``` r
+x <- str_split(lines, ",", simplify = TRUE)
+col_names <- x[1,]
+x <- x[-1,]
+x %>% as_data_frame() %>% 
+  setNames(col_names) %>% 
+  mutate_all(parse_guess)
+```
+
+    Warning: `as_data_frame()` was deprecated in tibble 2.0.0.
+    ℹ Please use `as_tibble()` (with slightly different semantics) to convert to a
+      tibble, or `as.data.frame()` to convert to a data frame.
+
+    Warning: The `x` argument of `as_tibble.matrix()` must have unique column names if
+    `.name_repair` is omitted as of tibble 2.0.0.
+    ℹ Using compatibility `.name_repair`.
+    ℹ The deprecated feature was likely used in the tibble package.
+      Please report the issue at <https://github.com/tidyverse/tibble/issues>.
+
+    # A tibble: 51 × 5
+       state                abb   region    population total
+       <chr>                <chr> <chr>          <dbl> <dbl>
+     1 Alabama              AL    South        4779736   135
+     2 Alaska               AK    West          710231    19
+     3 Arizona              AZ    West         6392017   232
+     4 Arkansas             AR    South        2915918    93
+     5 California           CA    West        37253956  1257
+     6 Colorado             CO    West         5029196    65
+     7 Connecticut          CT    Northeast    3574097    97
+     8 Delaware             DE    South         897934    38
+     9 District of Columbia DC    South         601723    99
+    10 Florida              FL    South       19687653   669
+    # ℹ 41 more rows
+
+#### Separate with Regex
+
+Ejemplo
+
+``` r
+s <- c("5'10", "6'1")
+tab <- data.frame(x = s)
+tab
+```
+
+         x
+    1 5'10
+    2  6'1
+
+Separar inches y feet a través de separate()
+
+``` r
+tab %>% separate(x, into=c("feet","inches"), sep="'" ) #Se debe específicar el nombre de las columnas y el símbolo porel cual separarse
+```
+
+      feet inches
+    1    5     10
+    2    6      1
+
+También es posible realizar esto a través de expresiones regulares
+
+``` r
+tab %>% extract(x, c("feet", "inches"), regex = "([\\d])'(\\d{1,2})")
+```
+
+      feet inches
+    1    5     10
+    2    6      1
+
+``` r
+s <- c("5'10", "6'1\"", "5'8inches")
+tab <- data.frame(x=s)
+tab
+```
+
+              x
+    1      5'10
+    2      6'1"
+    3 5'8inches
+
+``` r
+tab %>% separate(x, c("feet", "inches"), sep="'", fill="right")
+```
+
+      feet  inches
+    1    5      10
+    2    6      1"
+    3    5 8inches
+
+Pero si utilizamos extract()  
+
+``` r
+tab %>% extract(x, into = c("feet", "inches"), regex="(\\d)'(\\d{1,2})")
+```
+
+      feet inches
+    1    5     10
+    2    6      1
+    3    5      8
+
+### **Using Groups and Quantifiers**
+
+### Case 1
+
+For case 1, if we add a `'0` to, for example, convert all `6` to `6'0`,
+then our pattern will match. This can be done using groups using the
+following code:
+
+``` r
+yes <- c("5", "6", "5")
+no <- c("5'", "5''", "5'4")
+s <- c(yes, no)
+str_replace(s, "^([4-7])$", "\\1'0") #^$ poner este rango es otra manera de expresar = "mantenga esto"
+```
+
+    [1] "5'0" "6'0" "5'0" "5'"  "5''" "5'4"
+
+The pattern says it has to start (**`^`**), be followed with a digit
+between 4 and 7, and then end there (**`$`**). The parenthesis defines
+the group that we pass as **`\\1`** to the replace regex.
+
+### Cases 2 and 4
+
+We can adapt this code slightly to handle case 2 as well which covers
+the entry **`5'`**. Note that the **`5'`** is left untouched by the code
+above. This is because the extra **`'`** makes the pattern not match
+since we have to end with a 5 or 6. To handle case 2, we want to permit
+the 5 or 6 to be followed by no or one symbol for feet. So we can simply
+add **`'{0,1}`** after the **`'`** to do this. We can also use the none
+or once special character **`?`**. As we saw previously, this is
+different from **`*`** which is none or more. We now see that this code
+also handles the fourth case as well:
+
+``` r
+str_replace(s, "^([56])'?$", "\\1'0")
+```
+
+    [1] "5'0" "6'0" "5'0" "5'0" "5''" "5'4"
+
+Note that here we only permit 5 and 6 but not 4 and 7. This is because
+heights of exactly 5 and exactly 6 feet tall are quite common, so we
+assume those that typed 5 or 6 really meant either `60` or `72` inches.
+However, heights of exactly 4 or exactly 7 feet tall are so rare that,
+although we accept `84` as a valid entry, we assume that a `7` was
+entered in error.
+
+### Case 3
+
+We can use quantifiers to deal with  case 3. These entries are not
+matched because the inches include decimals and our pattern does not
+permit this. We need allow the second group to include decimals and not
+just digits. This means we must permit zero or one period
+**`.`** followed by zero or more digits. So we will use
+both **`?`** and **`*`**. Also remember that for this particular case,
+the period needs to be escaped since it is a special character (it means
+any character except a line break).
+
+So we can adapt our pattern, currently **`^[4-7]\\s*'\\s*\\d{1,2}$`**,
+to permit a decimal at the end:
+
+``` r
+pattern <- "^[4-7]\\s*'\\s*(\\d+\\.?\\d*)$"
+```
+
+### Case 5
+
+Case 5, meters using commas, we can approach similarly to how we
+converted the `x.y` to `x'y`. A difference is that we require that the
+first digit is 1 or 2:
+
+``` r
+yes <- c("1,7", "1, 8", "2, " )
+no <- c("5,8", "5,3,2", "1.7")
+s <- c(yes, no)
+str_replace(s, "^([12])\\s*,\\s*(\\d*)$", "\\1\\.\\2")
+```
+
+    [1] "1.7"   "1.8"   "2."    "5,8"   "5,3,2" "1.7"  
+
+### Trimming
+
+In general, spaces at the start or end of the string are uninformative.
+These can be particularly deceptive because sometimes they can be hard
+to see:
+
+``` r
+s <- "Hi "
+cat(s)
+```
+
+    Hi 
+
+``` r
+identical(s, "Hi")
+```
+
+    [1] FALSE
+
+``` r
+str_trim("5 ' 9 ")
+```
+
+    [1] "5 ' 9"
+
+### To upper and to lower case
+
+One of the entries writes out numbers as
+words: **`Five foot eight inches`**. Although not efficient, we could
+add 12 extra **`str_replace`** to convert **`zero`**
+to **`0`**, **`one`** to **`1`**, and so on. To avoid having to write
+two separate operations for **`Zero`** and **`zero`**, **`One`**
+and **`one`**, etc., we can use the `str_to_lower()` function to make
+all words lower case first:
+
+``` r
+s <- c("Five feet eight inches")
+str_to_lower(s)
+```
+
+    [1] "five feet eight inches"
+
+### Putting it into a function
+
+We are now ready to define a procedure that handles converting all the
+problematic cases.
+
+We can now put all this together into a function that takes a string
+vector and tries to convert as many strings as possible to a single
+format. Below is a function that puts together the previous code
+replacements:
+
+``` r
+convert_format <- function(s){
+  s %>%
+    str_replace("feet|foot|ft", "'") %>% #convert feet symbols to '
+    str_replace_all("inches|in|''|\"|cm|and", "") %>%  #remove inches and other symbols
+    str_replace("^([4-7])\\s*[,\\.\\s+]\\s*(\\d*)$", "\\1'\\2") %>% #change x.y, x,y x y
+    str_replace("^([56])'?$", "\\1'0") %>% #add 0 when to 5 or 6
+    str_replace("^([12])\\s*,\\s*(\\d*)$", "\\1\\.\\2") %>% #change european decimal
+    str_trim() #remove extra space
+}
+```
+
+We can also write a function that converts words to numbers:
+
+``` r
+words_to_numbers <- function(s){
+  str_to_lower(s) %>%  
+    str_replace_all("zero", "0") %>%
+    str_replace_all("one", "1") %>%
+    str_replace_all("two", "2") %>%
+    str_replace_all("three", "3") %>%
+    str_replace_all("four", "4") %>%
+    str_replace_all("five", "5") %>%
+    str_replace_all("six", "6") %>%
+    str_replace_all("seven", "7") %>%
+    str_replace_all("eight", "8") %>%
+    str_replace_all("nine", "9") %>%
+    str_replace_all("ten", "10") %>%
+    str_replace_all("eleven", "11")
+}
+```
+
+### **Recoding**
+
+``` r
+library(dslabs)
+data("gapminder")
+gapminder %>% 
+  filter(region=="Caribbean") %>% 
+  ggplot(aes(year, life_expectancy, color=country)) +
+  geom_line() + theme_bw()
+```
+
+![](HarvardX_PH125.6x_files/figure-commonmark/unnamed-chunk-144-1.png)
+
+Utilizando recode() para reducir los nombres
+
+``` r
+# recode long country names and remake plot
+gapminder %>% filter(region=="Caribbean") %>%
+  mutate(country = recode(country, 
+                          'Antigua and Barbuda'="Barbuda",
+                          'Dominican Republic' = "DR",
+                          'St. Vincent and the Grenadines' = "St. Vincent",
+                          'Trinidad and Tobago' = "Trinidad")) %>%
+  ggplot(aes(year, life_expectancy, color = country)) +
+  geom_line() + ylab("Life expectancy") + theme_bw()
+```
+
+![](HarvardX_PH125.6x_files/figure-commonmark/unnamed-chunk-145-1.png)
+
+``` r
+graf_final <- gapminder %>% filter(region=="Caribbean") %>%
+  mutate(country = recode(country, 
+                          'Antigua and Barbuda'="Barbuda",
+                          'Dominican Republic' = "DR",
+                          'St. Vincent and the Grenadines' = "St. Vincent",
+                          'Trinidad and Tobago' = "Trinidad")) %>%
+  ggplot(aes(year, life_expectancy, color = country)) +
+  geom_line() + ylab("Life expectancy") + theme_bw()
+graf_final
+```
+
+![](HarvardX_PH125.6x_files/figure-commonmark/unnamed-chunk-145-2.png)
+
+``` r
+ggsave( "images/graf_final.png")
+```
+
+    Saving 7 x 5 in image
+
+### **Assessment Part 2: String Processing Part 3**
+
+Import raw Brexit referendum polling data from Wikipedia:
+
+``` r
+library(rvest)
+library(tidyverse)
+library(stringr)
+url <- "https://en.wikipedia.org/w/index.php?title=Opinion_polling_for_the_United_Kingdom_European_Union_membership_referendum&oldid=896735054"
+tab <- read_html(url) %>% html_nodes("table")
+polls <- tab[[6]] %>% html_table(fill = TRUE)
+nrow(polls)
+```
+
+    [1] 134
+
+``` r
+head(polls)
+```
+
+    # A tibble: 6 × 9
+      `Date(s) conducted` Remain  Leave   Undecided Lead  Sample     `Conducted by` 
+      <chr>               <chr>   <chr>   <chr>     <chr> <chr>      <chr>          
+    1 Date(s) conducted   ""      ""      Undecided Lead  Sample     Conducted by   
+    2 23 June 2016        "48.1%" "51.9%" N/A       3.8%  33,577,342 Results of the…
+    3 23 June             "52%"   "48%"   N/A       4%    4,772      YouGov         
+    4 22 June             "55%"   "45%"   N/A       10%   4,700      Populus        
+    5 20–22 June          "51%"   "49%"   N/A       2%    3,766      YouGov         
+    6 20–22 June          "49%"   "46%"   1%        3%    1,592      Ipsos MORI     
+    # ℹ 2 more variables: `Polling type` <chr>, Notes <chr>
+
+``` r
+polls <- polls %>% slice(-1) %>% setNames(c("dates", "remain", "leave", "undecided", "lead", "samplesize", "pollster", "poll_type", "notes"))
+#View(polls)
+sum(str_detect(polls$remain, "%"))
+```
+
+    [1] 129
+
+``` r
+str_replace(polls$undecided, "N/A", "0")
+```
+
+      [1] "0"                                                                                                                                           
+      [2] "0"                                                                                                                                           
+      [3] "0"                                                                                                                                           
+      [4] "0"                                                                                                                                           
+      [5] "1%"                                                                                                                                          
+      [6] "9%"                                                                                                                                          
+      [7] "0"                                                                                                                                           
+      [8] "11%"                                                                                                                                         
+      [9] "16%"                                                                                                                                         
+     [10] "11%"                                                                                                                                         
+     [11] "13%"                                                                                                                                         
+     [12] "2%"                                                                                                                                          
+     [13] "13%"                                                                                                                                         
+     [14] "9%"                                                                                                                                          
+     [15] "12%"                                                                                                                                         
+     [16] "All official campaigning suspended until 19 June after the fatal shooting of Jo Cox MP.[26]"                                                 
+     [17] "9%"                                                                                                                                          
+     [18] "13%"                                                                                                                                         
+     [19] "16%"                                                                                                                                         
+     [20] "11%"                                                                                                                                         
+     [21] "3%"                                                                                                                                          
+     [22] "15%"                                                                                                                                         
+     [23] "5%"                                                                                                                                          
+     [24] "7%"                                                                                                                                          
+     [25] "9%"                                                                                                                                          
+     [26] "13%"                                                                                                                                         
+     [27] "3%"                                                                                                                                          
+     [28] "0"                                                                                                                                           
+     [29] "11%"                                                                                                                                         
+     [30] "13%"                                                                                                                                         
+     [31] "0"                                                                                                                                           
+     [32] "11%"                                                                                                                                         
+     [33] "9%"                                                                                                                                          
+     [34] "5%"                                                                                                                                          
+     [35] "11%"                                                                                                                                         
+     [36] "16%"                                                                                                                                         
+     [37] "16%"                                                                                                                                         
+     [38] "13%"                                                                                                                                         
+     [39] "15%"                                                                                                                                         
+     [40] "9%"                                                                                                                                          
+     [41] "3%"                                                                                                                                          
+     [42] "12%"                                                                                                                                         
+     [43] "18%"                                                                                                                                         
+     [44] "13%"                                                                                                                                         
+     [45] "16%"                                                                                                                                         
+     [46] "10%"                                                                                                                                         
+     [47] "3%"                                                                                                                                          
+     [48] "14%"                                                                                                                                         
+     [49] "12%"                                                                                                                                         
+     [50] "7%"                                                                                                                                          
+     [51] "5%"                                                                                                                                          
+     [52] "14%"                                                                                                                                         
+     [53] "10%"                                                                                                                                         
+     [54] "5%"                                                                                                                                          
+     [55] "21%"                                                                                                                                         
+     [56] "22%"                                                                                                                                         
+     [57] "16%"                                                                                                                                         
+     [58] "11%"                                                                                                                                         
+     [59] "13%"                                                                                                                                         
+     [60] "11%"                                                                                                                                         
+     [61] "11%"                                                                                                                                         
+     [62] "14%"                                                                                                                                         
+     [63] "0"                                                                                                                                           
+     [64] "26%"                                                                                                                                         
+     [65] "13%"                                                                                                                                         
+     [66] "17%"                                                                                                                                         
+     [67] "13%"                                                                                                                                         
+     [68] "10%"                                                                                                                                         
+     [69] "6%"                                                                                                                                          
+     [70] "9%"                                                                                                                                          
+     [71] "8%"                                                                                                                                          
+     [72] "11%"                                                                                                                                         
+     [73] "13%"                                                                                                                                         
+     [74] "6%"                                                                                                                                          
+     [75] "The EU referendum campaign officially begins.[31]"                                                                                           
+     [76] "28%"                                                                                                                                         
+     [77] "16%"                                                                                                                                         
+     [78] "17%"                                                                                                                                         
+     [79] "30%"                                                                                                                                         
+     [80] "17%"                                                                                                                                         
+     [81] "12%"                                                                                                                                         
+     [82] "HM Government starts sending a pro-Remain pamphlet to 27 million UK households and begins a pro-Remain digital advertising campaign.[32][33]"
+     [83] "16%"                                                                                                                                         
+     [84] "18%"                                                                                                                                         
+     [85] "13%"                                                                                                                                         
+     [86] "5%"                                                                                                                                          
+     [87] "18%"                                                                                                                                         
+     [88] "30%"                                                                                                                                         
+     [89] "14%"                                                                                                                                         
+     [90] "0"                                                                                                                                           
+     [91] "12%"                                                                                                                                         
+     [92] "10%"                                                                                                                                         
+     [93] "19%"                                                                                                                                         
+     [94] "11%"                                                                                                                                         
+     [95] "17%"                                                                                                                                         
+     [96] "19%"                                                                                                                                         
+     [97] "4%"                                                                                                                                          
+     [98] "16%"                                                                                                                                         
+     [99] "16%"                                                                                                                                         
+    [100] "7%"                                                                                                                                          
+    [101] "15%"                                                                                                                                         
+    [102] "19%"                                                                                                                                         
+    [103] "18%"                                                                                                                                         
+    [104] "19%"                                                                                                                                         
+    [105] "19%"                                                                                                                                         
+    [106] "18%"                                                                                                                                         
+    [107] "18%"                                                                                                                                         
+    [108] "15%"                                                                                                                                         
+    [109] "0"                                                                                                                                           
+    [110] "25%"                                                                                                                                         
+    [111] "David Cameron announces the date of UK's In/Out EU referendum after an EU summit in Brussels.[34]"                                           
+    [112] "25%"                                                                                                                                         
+    [113] "17%"                                                                                                                                         
+    [114] "10%"                                                                                                                                         
+    [115] "23%"                                                                                                                                         
+    [116] "19%"                                                                                                                                         
+    [117] "10%"                                                                                                                                         
+    [118] "25%"                                                                                                                                         
+    [119] "18%"                                                                                                                                         
+    [120] "10%"                                                                                                                                         
+    [121] "17%"                                                                                                                                         
+    [122] "19%"                                                                                                                                         
+    [123] "19%"                                                                                                                                         
+    [124] "20%"                                                                                                                                         
+    [125] "9%"                                                                                                                                          
+    [126] "14%"                                                                                                                                         
+    [127] "10%"                                                                                                                                         
+    [128] "18%"                                                                                                                                         
+    [129] "0"                                                                                                                                           
+    [130] "17%"                                                                                                                                         
+    [131] "22%"                                                                                                                                         
+    [132] "12%"                                                                                                                                         
+    [133] "18%"                                                                                                                                         
