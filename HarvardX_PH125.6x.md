@@ -2901,139 +2901,270 @@ sum(str_detect(polls$remain, "%"))
     [1] 129
 
 ``` r
-str_replace(polls$undecided, "N/A", "0")
+head(str_replace(polls$undecided, "N/A", "0"))
 ```
 
-      [1] "0"                                                                                                                                           
-      [2] "0"                                                                                                                                           
-      [3] "0"                                                                                                                                           
-      [4] "0"                                                                                                                                           
-      [5] "1%"                                                                                                                                          
-      [6] "9%"                                                                                                                                          
-      [7] "0"                                                                                                                                           
-      [8] "11%"                                                                                                                                         
-      [9] "16%"                                                                                                                                         
-     [10] "11%"                                                                                                                                         
-     [11] "13%"                                                                                                                                         
-     [12] "2%"                                                                                                                                          
-     [13] "13%"                                                                                                                                         
-     [14] "9%"                                                                                                                                          
-     [15] "12%"                                                                                                                                         
-     [16] "All official campaigning suspended until 19 June after the fatal shooting of Jo Cox MP.[26]"                                                 
-     [17] "9%"                                                                                                                                          
-     [18] "13%"                                                                                                                                         
-     [19] "16%"                                                                                                                                         
-     [20] "11%"                                                                                                                                         
-     [21] "3%"                                                                                                                                          
-     [22] "15%"                                                                                                                                         
-     [23] "5%"                                                                                                                                          
-     [24] "7%"                                                                                                                                          
-     [25] "9%"                                                                                                                                          
-     [26] "13%"                                                                                                                                         
-     [27] "3%"                                                                                                                                          
-     [28] "0"                                                                                                                                           
-     [29] "11%"                                                                                                                                         
-     [30] "13%"                                                                                                                                         
-     [31] "0"                                                                                                                                           
-     [32] "11%"                                                                                                                                         
-     [33] "9%"                                                                                                                                          
-     [34] "5%"                                                                                                                                          
-     [35] "11%"                                                                                                                                         
-     [36] "16%"                                                                                                                                         
-     [37] "16%"                                                                                                                                         
-     [38] "13%"                                                                                                                                         
-     [39] "15%"                                                                                                                                         
-     [40] "9%"                                                                                                                                          
-     [41] "3%"                                                                                                                                          
-     [42] "12%"                                                                                                                                         
-     [43] "18%"                                                                                                                                         
-     [44] "13%"                                                                                                                                         
-     [45] "16%"                                                                                                                                         
-     [46] "10%"                                                                                                                                         
-     [47] "3%"                                                                                                                                          
-     [48] "14%"                                                                                                                                         
-     [49] "12%"                                                                                                                                         
-     [50] "7%"                                                                                                                                          
-     [51] "5%"                                                                                                                                          
-     [52] "14%"                                                                                                                                         
-     [53] "10%"                                                                                                                                         
-     [54] "5%"                                                                                                                                          
-     [55] "21%"                                                                                                                                         
-     [56] "22%"                                                                                                                                         
-     [57] "16%"                                                                                                                                         
-     [58] "11%"                                                                                                                                         
-     [59] "13%"                                                                                                                                         
-     [60] "11%"                                                                                                                                         
-     [61] "11%"                                                                                                                                         
-     [62] "14%"                                                                                                                                         
-     [63] "0"                                                                                                                                           
-     [64] "26%"                                                                                                                                         
-     [65] "13%"                                                                                                                                         
-     [66] "17%"                                                                                                                                         
-     [67] "13%"                                                                                                                                         
-     [68] "10%"                                                                                                                                         
-     [69] "6%"                                                                                                                                          
-     [70] "9%"                                                                                                                                          
-     [71] "8%"                                                                                                                                          
-     [72] "11%"                                                                                                                                         
-     [73] "13%"                                                                                                                                         
-     [74] "6%"                                                                                                                                          
-     [75] "The EU referendum campaign officially begins.[31]"                                                                                           
-     [76] "28%"                                                                                                                                         
-     [77] "16%"                                                                                                                                         
-     [78] "17%"                                                                                                                                         
-     [79] "30%"                                                                                                                                         
-     [80] "17%"                                                                                                                                         
-     [81] "12%"                                                                                                                                         
-     [82] "HM Government starts sending a pro-Remain pamphlet to 27 million UK households and begins a pro-Remain digital advertising campaign.[32][33]"
-     [83] "16%"                                                                                                                                         
-     [84] "18%"                                                                                                                                         
-     [85] "13%"                                                                                                                                         
-     [86] "5%"                                                                                                                                          
-     [87] "18%"                                                                                                                                         
-     [88] "30%"                                                                                                                                         
-     [89] "14%"                                                                                                                                         
-     [90] "0"                                                                                                                                           
-     [91] "12%"                                                                                                                                         
-     [92] "10%"                                                                                                                                         
-     [93] "19%"                                                                                                                                         
-     [94] "11%"                                                                                                                                         
-     [95] "17%"                                                                                                                                         
-     [96] "19%"                                                                                                                                         
-     [97] "4%"                                                                                                                                          
-     [98] "16%"                                                                                                                                         
-     [99] "16%"                                                                                                                                         
-    [100] "7%"                                                                                                                                          
-    [101] "15%"                                                                                                                                         
-    [102] "19%"                                                                                                                                         
-    [103] "18%"                                                                                                                                         
-    [104] "19%"                                                                                                                                         
-    [105] "19%"                                                                                                                                         
-    [106] "18%"                                                                                                                                         
-    [107] "18%"                                                                                                                                         
-    [108] "15%"                                                                                                                                         
-    [109] "0"                                                                                                                                           
-    [110] "25%"                                                                                                                                         
-    [111] "David Cameron announces the date of UK's In/Out EU referendum after an EU summit in Brussels.[34]"                                           
-    [112] "25%"                                                                                                                                         
-    [113] "17%"                                                                                                                                         
-    [114] "10%"                                                                                                                                         
-    [115] "23%"                                                                                                                                         
-    [116] "19%"                                                                                                                                         
-    [117] "10%"                                                                                                                                         
-    [118] "25%"                                                                                                                                         
-    [119] "18%"                                                                                                                                         
-    [120] "10%"                                                                                                                                         
-    [121] "17%"                                                                                                                                         
-    [122] "19%"                                                                                                                                         
-    [123] "19%"                                                                                                                                         
-    [124] "20%"                                                                                                                                         
-    [125] "9%"                                                                                                                                          
-    [126] "14%"                                                                                                                                         
-    [127] "10%"                                                                                                                                         
-    [128] "18%"                                                                                                                                         
-    [129] "0"                                                                                                                                           
-    [130] "17%"                                                                                                                                         
-    [131] "22%"                                                                                                                                         
-    [132] "12%"                                                                                                                                         
-    [133] "18%"                                                                                                                                         
+    [1] "0"  "0"  "0"  "0"  "1%" "9%"
+
+## Dates, Times, and Text Mining
+
+### **Dates and Times and text**
+
+### **Dates and Times**
+
+``` r
+library(dslabs)
+library(tidyverse)
+data("polls_us_election_2016")
+polls_us_election_2016$startdate %>% head()
+```
+
+    [1] "2016-11-03" "2016-11-01" "2016-11-02" "2016-11-04" "2016-11-03"
+    [6] "2016-11-03"
+
+``` r
+class(polls_us_election_2016$startdate)
+```
+
+    [1] "Date"
+
+``` r
+polls_us_election_2016 %>% filter(pollster=="Ipsos" & state=="U.S.") %>% ggplot(aes(startdate, rawpoll_trump)) + 
+  geom_line() + xlab("Start date") + ylab("Rawpoll Trump") + theme_bw()
+```
+
+![](HarvardX_PH125.6x_files/figure-commonmark/unnamed-chunk-150-1.png)
+
+``` r
+ggsave("images/rawpoll_Trump.png")
+```
+
+Abordar fechas con lubridate()
+
+``` r
+library(lubridate)
+dates <- sample(polls_us_election_2016$startdate, 10) %>% sort()
+dates
+```
+
+     [1] "2016-03-18" "2016-07-15" "2016-09-06" "2016-09-08" "2016-09-21"
+     [6] "2016-09-27" "2016-09-30" "2016-10-13" "2016-10-20" "2016-10-21"
+
+También, es posible extraer los días, meses y años
+
+``` r
+data.frame(date = dates, 
+           month = month(dates),
+           day = day(dates),
+           year = year(dates))
+```
+
+             date month day year
+    1  2016-03-18     3  18 2016
+    2  2016-07-15     7  15 2016
+    3  2016-09-06     9   6 2016
+    4  2016-09-08     9   8 2016
+    5  2016-09-21     9  21 2016
+    6  2016-09-27     9  27 2016
+    7  2016-09-30     9  30 2016
+    8  2016-10-13    10  13 2016
+    9  2016-10-20    10  20 2016
+    10 2016-10-21    10  21 2016
+
+Extraer los labels
+
+``` r
+month(dates, label=TRUE)
+```
+
+     [1] Mar Jul Sep Sep Sep Sep Sep Oct Oct Oct
+    12 Levels: Jan < Feb < Mar < Apr < May < Jun < Jul < Aug < Sep < ... < Dec
+
+También es útil la función ymd() dentro de fechas, que supone (tipo
+sparse) el tipo de datos a partir de strings. Se sugiere que el formato
+yyyy-mm-dd sea el estándar de datos.
+
+``` r
+x <- c(20090101, "2009-01-02", "2009 01 03", "2009-1-4",
+       "2009-1, 5", "Created on 2009 1 6", "200901 !!! 07")
+ymd(x)
+```
+
+    [1] "2009-01-01" "2009-01-02" "2009-01-03" "2009-01-04" "2009-01-05"
+    [6] "2009-01-06" "2009-01-07"
+
+Otros tipos de parse.
+
+``` r
+x <- "09/01/02"
+ydm(x)
+```
+
+    [1] "2009-02-01"
+
+``` r
+myd(x)
+```
+
+    [1] "2001-09-02"
+
+``` r
+dym(x)
+```
+
+    [1] "2001-02-09"
+
+``` r
+dmy(x)
+```
+
+    [1] "2002-01-09"
+
+De igual forma, se puede extraer el tiempo local o internacional a
+através de la función now()
+
+``` r
+now() #Hora local (-5)
+```
+
+    [1] "2025-04-19 06:54:00 -05"
+
+``` r
+now("GMT") #Hora global (Londres)
+```
+
+    [1] "2025-04-19 11:54:00 GMT"
+
+De igual forma, es posible extraer horas minutos y segundos actuales
+
+``` r
+now() %>% hour()
+```
+
+    [1] 6
+
+``` r
+now() %>% minute()
+```
+
+    [1] 54
+
+``` r
+now() %>% second()
+```
+
+    [1] 0.542948
+
+Y restringir al formato de fecha
+
+``` r
+# parse time
+x <- c("12:34:56")
+hms(x)
+```
+
+    [1] "12H 34M 56S"
+
+``` r
+#parse datetime
+x <- "Nov/2/2012 12:34:56"
+mdy_hms(x)
+```
+
+    [1] "2012-11-02 12:34:56 UTC"
+
+### Key points
+
+- Dates are a separate data type in R.The **tidyverse** includes
+  functionality for dealing with dates through the **lubridate**
+  package. 
+
+- Extract the year, month and day from a date object with the `year()`,
+  `month()` and `day()` functions.
+
+- Parsers convert strings into dates with the standard YYYY-MM-DD format
+  (ISO 8601 format). Use the parser with the name corresponding to the
+  string format of year, month and day (`ymd()`, `ydm()`, `myd()`,
+  `mdy()`, `dmy()`, `dym()`).
+
+- Get the current time with the `Sys.time()` function. Use the `now()`
+  function instead to specify a time zone.
+
+- You can extract values from time objects with the `hour()`, `minute()`
+  and `second()` functions.
+
+- Parsers convert strings into times (for example, `hms()`). Parsers can
+  also create combined date-time objects (for example, `mdy_hms()`).
+
+### **Assessment Part 1: Dates, Times, and Text Mining**
+
+``` r
+data(brexit_polls)
+#View(brexit_polls)
+```
+
+How many polls had a start date (`startdate`) in April (month number 4)?
+
+``` r
+sum(month(brexit_polls$startdate) == "4")
+```
+
+    [1] 25
+
+Use the `round_date()` function on the `enddate` column with the
+argument `unit="week"`. How many polls ended the week of 2016-06-12?
+
+``` r
+sum(round_date(brexit_polls$enddate, unit = "week") == "2016-06-12")
+```
+
+    [1] 13
+
+Use the `weekdays()` function from **lubridate** to determine the
+weekday on which each poll ended (`enddate`).
+
+``` r
+table(weekdays(brexit_polls$enddate))
+```
+
+
+       Friday    Monday  Saturday    Sunday  Thursday   Tuesday Wednesday 
+           14        20         4        37        17        23        12 
+
+Load the `movielens` data frame from **dslabs**.
+
+``` r
+data(movielens)
+#View(movielens)
+```
+
+This data frame contains a set of about 100,000 movie reviews. The
+`timestamp` column contains the review date as the number of seconds
+since 1970-01-01 (epoch time).
+
+Convert the `timestamp` column to dates using the **lubridate**
+`as_datetime()` function.
+
+Which year had the most movie reviews?
+
+``` r
+as_datetime(movielens$timestamp) %>% year() %>% table()
+```
+
+    .
+     1995  1996  1997  1998  1999  2000  2001  2002  2003  2004  2005  2006  2007 
+        3  6239  3294  1825  5901 13869  4658  3938  4462  4658  7161  7493  1548 
+     2008  2009  2010  2011  2012  2013  2014  2015  2016 
+     3676  3434  2518  4450  3849  1969  2224  6610  6225 
+
+Which hour of the day had the most movie reviews?
+
+``` r
+as_datetime(movielens$timestamp) %>% hour() %>% table()
+```
+
+    .
+       0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15 
+    3960 5296 4056 4007 3584 3773 4361 2932 2667 2866 2948 2862 3361 2384 3723 4404 
+      16   17   18   19   20   21   22   23 
+    4803 4717 5094 5161 7011 6428 6008 3598 
